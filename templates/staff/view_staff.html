@@ -27,11 +27,11 @@
             <tbody>
                 {% for s in staff_list %}
                 <tr>
-                    <td>{{ s.name }}</td>
-                    <td>{{ s.mobile_number }}</td>
-                    <td>{{ s.role }}</td>
-                    <td>{{ s.branch }}</td>
-                    <td>{{ s.year }}</td>
+                    <td data-label="Name">{{ s.name }}</td>
+                    <td data-label="Mobile">{{ s.mobile_number }}</td>
+                    <td data-label="Role">{{ s.role }}</td>
+                    <td data-label="Branch">{{ s.branch }}</td>
+                    <td data-label="Year">{{ s.year }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

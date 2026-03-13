@@ -32,16 +32,16 @@
             <tbody>
                 {% for req in requests %}
                 <tr>
-                    <td>{{ req.out_date }}</td>
-                    <td>{{ req.in_date }}</td>
-                    <td>{{ req.place }}</td>
-                    <td>
+                    <td data-label="Out Date">{{ req.out_date }}</td>
+                    <td data-label="In Date">{{ req.in_date }}</td>
+                    <td data-label="Place">{{ req.place }}</td>
+                    <td data-label="Status">
                         <span class="badge badge-{{ req.status|lower }}">{{ req.status }}</span>
                     </td>
-                    <td>{{ req.actual_in_date or '—' }}</td>
-                    <td>{{ req.late_days }}</td>
-                    <td>{{ req.fine }}</td>
-                    <td>
+                    <td data-label="Actual In">{{ req.actual_in_date or '—' }}</td>
+                    <td data-label="Late Days">{{ req.late_days }}</td>
+                    <td data-label="Fine (₹)">{{ req.fine }}</td>
+                    <td data-label="Fine Status">
                         {% if req.fine_status == 'No Fine' %}
                         <span class="badge badge-no-fine">{{ req.fine_status }}</span>
                         {% elif req.fine_status == 'Unpaid' %}
@@ -50,8 +50,8 @@
                         <span class="badge badge-paid">{{ req.fine_status }}</span>
                         {% endif %}
                     </td>
-                    <td>{{ req.reject_reason or '—' }}</td>
-                    <td>
+                    <td data-label="Reject Reason">{{ req.reject_reason or '—' }}</td>
+                    <td data-label="QR Code">
                         {% if req.status == 'Approved' and req.qr_file %}
                         <a href="{{ url_for('student.download_qr', req_id=req.id) }}" class="btn btn-primary"
                             style="padding: 6px 14px; font-size: 0.85rem;">📥 Download</a>

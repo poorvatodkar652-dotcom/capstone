@@ -25,9 +25,9 @@
             <tbody>
                 {% for notice in notices %}
                 <tr>
-                    <td>{{ notice.datetime_posted }}</td>
-                    <td>{{ notice.sender_role }}</td>
-                    <td>{{ notice.message }}</td>
+                    <td data-label="Date & Time">{{ notice.datetime_posted }}</td>
+                    <td data-label="Sender">{{ notice.sender_role }}</td>
+                    <td data-label="Notice">{{ notice.message }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
