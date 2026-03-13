@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Gatepass Register — Smart Hostel Management{% endblock %}
+
+{% block nav %}
+<div class="nav-links">
+    <a href="{{ url_for('security.dashboard') }}">📋 Dashboard</a>
+    <a href="{{ url_for('security.logout') }}">🚪 Logout</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-title">📊 Gatepass Register</div>
+
+    <form method="GET" class="search-bar">
+        <input type="text" name="search" class="form-control" placeholder="Search by Enrollment..."
+            value="{{ search }}">
+        <button type="submit" class="btn btn-primary">🔍 Search</button>
+        {% if search %}
+        <a href="{{ url_for('security.gatepass_register') }}" class="btn btn-outline">Reset</a>
+        {% endif %}
+    </form>
+
+    {% if requests %}
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Enrollment</th>
+                    <th>Student Name</th>
+                    <th>Branch</th>
+                    <th>Year</th>
+                    <th>Out Date</th>
+                    <th>In Date</th>
+                    <th>Place</th>
+                    <th>Status</th>
+                    <th>Actual In</th>
+                    <th>Late Days</th>
+                    <th>Fine (₹)</th>
+                    <th>Fine Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in requests %}
+                <tr>
+                    <td>{{ req.enrollment }}</td>
+                    <td>{{ req.student_name }}</td>
+                    <td>{{ req.branch }}</td>
+                    <td>{{ req.year }}</td>
+                    <td>{{ req.out_date }}</td>
+                    <td>{{ req.in_date }}</td>
+                    <td>{{ req.place }}</td>
+                    <td><span class="badge badge-{{ req.status|lower }}">{{ req.status }}</span></td>
+                    <td>{{ req.actual_in_date or '—' }}</td>
+                    <td>{{ req.late_days }}</td>
+                    <td>{{ req.fine }}</td>
+                    <td>
+                        {% if req.fine_status == 'No Fine' %}
+                        <span class="badge badge-no-fine">{{ req.fine_status }}</span>
+                        {% elif req.fine_status == 'Unpaid' %}
+                        <span class="badge badge-unpaid">{{ req.fine_status }}</span>
+                        {% else %}
+                        <span class="badge badge-paid">{{ req.fine_status }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="icon">📭</div>
+        <p>{% if search %}No results found for "{{ search }}".{% else %}No gatepass records found.{% endif %}</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

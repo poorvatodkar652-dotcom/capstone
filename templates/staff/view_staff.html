@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}All Staff — Smart Hostel Management{% endblock %}
+
+{% block nav %}
+<div class="nav-links">
+    <a href="{{ url_for('staff.dashboard') }}">📋 Dashboard</a>
+    <a href="{{ url_for('staff.logout') }}">🚪 Logout</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-title">👥 All Registered Staff</div>
+
+    {% if staff_list %}
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Mobile Number</th>
+                    <th>Role</th>
+                    <th>Branch</th>
+                    <th>Year</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in staff_list %}
+                <tr>
+                    <td>{{ s.name }}</td>
+                    <td>{{ s.mobile_number }}</td>
+                    <td>{{ s.role }}</td>
+                    <td>{{ s.branch }}</td>
+                    <td>{{ s.year }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="icon">👥</div>
+        <p>No staff registered yet.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

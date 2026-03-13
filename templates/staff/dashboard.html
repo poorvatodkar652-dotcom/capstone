@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ staff_role }} Dashboard — Smart Hostel Management{% endblock %}
+
+{% block nav %}
+<div class="nav-links">
+    <a href="{{ url_for('home.index') }}">🏠 Home</a>
+    <a href="{{ url_for('staff.logout') }}">🚪 Logout</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <div class="welcome-text">Welcome, <span>{{ staff_name }}</span> ({{ staff_role }})</div>
+    <div class="dashboard-actions">
+        {% if staff_role == 'Warden' %}
+        <a href="{{ url_for('staff.view_requests') }}" class="btn btn-primary">📋 View / Approve Requests</a>
+        <a href="{{ url_for('staff.gatepass_register') }}" class="btn btn-accent">📊 Gatepass Register</a>
+        <a href="{{ url_for('staff.send_notice') }}" class="btn btn-outline">📝 Send Notice</a>
+        <a href="{{ url_for('staff.view_notices') }}" class="btn btn-outline">📢 View Notices</a>
+        {% endif %}
+
+        {% if staff_role == 'HOD' %}
+        <a href="{{ url_for('staff.view_all_staff') }}" class="btn btn-primary">👥 View All Staff</a>
+        <a href="{{ url_for('staff.all_branch_requests') }}" class="btn btn-accent">📋 All Branch Requests</a>
+        <a href="{{ url_for('staff.send_notice') }}" class="btn btn-outline">📝 Send Notice</a>
+        <a href="{{ url_for('staff.view_notices') }}" class="btn btn-outline">📢 View Notices</a>
+        {% endif %}
+
+        <a href="{{ url_for('staff.logout') }}" class="btn btn-danger">🚪 Logout</a>
+    </div>
+</div>
+{% endblock %}

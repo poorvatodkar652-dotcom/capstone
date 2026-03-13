@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Home — Smart Hostel Management{% endblock %}
+
+{% block content %}
+<div class="home-hero">
+    <h2>Welcome to the<br>Smart Hostel Management System</h2>
+    <p>Efficiently manage student admissions, gatepasses, staff operations, and security — all in one integrated
+        platform.</p>
+
+    <div class="home-buttons">
+        <a href="{{ url_for('student.login') }}" class="btn btn-primary btn-lg">🎓 Student Module</a>
+    </div>
+
+    <div class="admin-login-section">
+        <h3>🔐 Admin Access</h3>
+        <form action="{{ url_for('home.admin_login') }}" method="POST" class="form-inline">
+            <input type="password" name="password" class="form-control" placeholder="Enter admin password" required>
+            <button type="submit" class="btn btn-accent">Login</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

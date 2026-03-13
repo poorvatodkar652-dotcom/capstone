@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}View Requests — Smart Hostel Management{% endblock %}
+
+{% block nav %}
+<div class="nav-links">
+    <a href="{{ url_for('staff.dashboard') }}">📋 Dashboard</a>
+    <a href="{{ url_for('staff.logout') }}">🚪 Logout</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-title">📋 Gatepass Requests (Your Branch/Year)</div>
+
+    {% if requests %}
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Enrollment</th>
+                    <th>Student Name</th>
+                    <th>Out Date</th>
+                    <th>In Date</th>
+                    <th>Place</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in requests %}
+                <tr>
+                    <td>{{ req.enrollment }}</td>
+                    <td>{{ req.student_name }}</td>
+                    <td>{{ req.out_date }}</td>
+                    <td>{{ req.in_date }}</td>
+                    <td>{{ req.place }}</td>
+                    <td>{{ req.reason }}</td>
+                    <td>
+                        <span class="badge badge-{{ req.status|lower }}">{{ req.status }}</span>
+                    </td>
+                    <td>
+                        {% if req.status == 'Pending' %}
+                        <div class="btn-group">
+                            <form method="POST" action="{{ url_for('staff.approve_request', req_id=req.id) }}"
+                                style="display:inline;">
+                                <button type="submit" class="btn btn-success"
+                                    style="padding: 6px 14px; font-size: 0.85rem;">✅ Approve</button>
+                            </form>
+                            <button type="button" class="btn btn-danger" style="padding: 6px 14px; font-size: 0.85rem;"
+                                onclick="openRejectModal({{ req.id }})">❌ Reject</button>
+                        </div>
+                        {% else %}
+                        —
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="icon">📭</div>
+        <p>No gatepass requests for your branch/year.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Reject Modal -->
+<div class="modal-overlay" id="rejectModal">
+    <div class="modal-content">
+        <h3>Reject Request</h3>
+        <form method="POST" id="rejectForm">
+            <div class="form-group">
+                <label>Reason for Rejection (optional)</label>
+                <textarea name="reject_reason" class="form-control"
+                    placeholder="Enter reason for rejection..."></textarea>
+            </div>
+            <div class="btn-group">
+                <button type="submit" class="btn btn-danger">Reject</button>
+                <button type="button" class="btn btn-outline" onclick="closeRejectModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function openRejectModal(reqId) {
+        document.getElementById('rejectForm').action = '/staff/reject/' + reqId;
+        document.getElementById('rejectModal').classList.add('active');
+    }
+    function closeRejectModal() {
+        document.getElementById('rejectModal').classList.remove('active');
+    }
+    document.getElementById('rejectModal').addEventListener('click', function (e) {
+        if (e.target === this) closeRejectModal();
+    });
+</script>
+{% endblock %}

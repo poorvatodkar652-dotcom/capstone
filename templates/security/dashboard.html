@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Security Dashboard — Smart Hostel Management{% endblock %}
+
+{% block nav %}
+<div class="nav-links">
+    <a href="{{ url_for('home.index') }}">🏠 Home</a>
+    <a href="{{ url_for('security.logout') }}">🚪 Logout</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <div class="welcome-text">Welcome Security : <span>{{ security_name }}</span></div>
+    <div class="dashboard-actions">
+        <a href="{{ url_for('security.gatepass_entry') }}" class="btn btn-primary">🔍 Gatepass Entry (QR Scan)</a>
+        <a href="{{ url_for('security.gatepass_register') }}" class="btn btn-accent">📊 Gatepass Register</a>
+        <a href="{{ url_for('security.send_notice') }}" class="btn btn-outline">📝 Send Notice</a>
+        <a href="{{ url_for('security.view_notices') }}" class="btn btn-outline">📢 View Notices</a>
+        <a href="{{ url_for('security.logout') }}" class="btn btn-danger">🚪 Logout</a>
+    </div>
+</div>
+{% endblock %}

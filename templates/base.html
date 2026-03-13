@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Smart Hostel Management System - Government Residence Women Polytechnic, Tasgaon">
+    <title>{% block title %}Smart Hostel Management{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1>Government Residence Women Polytechnic</h1>
+        <div class="subtitle">Tasgaon</div>
+        <div class="system-name">SMART HOSTEL MANAGEMENT SYSTEM</div>
+        {% block nav %}{% endblock %}
+    </header>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-container">
+        {% for category, message in messages %}
+        <div class="flash-message {{ category }}">
+            {% if category == 'success' %}✅{% elif category == 'error' %}❌{% else %}ℹ️{% endif %}
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        &copy; 2026 Government Residence Women Polytechnic, Tasgaon — Smart Hostel Management System
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}All Branch Requests — Smart Hostel Management{% endblock %}
+
+{% block nav %}
+<div class="nav-links">
+    <a href="{{ url_for('staff.dashboard') }}">📋 Dashboard</a>
+    <a href="{{ url_for('staff.logout') }}">🚪 Logout</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-title">📋 All Branch Requests</div>
+
+    {% if requests %}
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Enrollment</th>
+                    <th>Student Name</th>
+                    <th>Branch</th>
+                    <th>Year</th>
+                    <th>Out Date</th>
+                    <th>In Date</th>
+                    <th>Place</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in requests %}
+                <tr>
+                    <td>{{ req.enrollment }}</td>
+                    <td>{{ req.student_name }}</td>
+                    <td>{{ req.branch }}</td>
+                    <td>{{ req.year }}</td>
+                    <td>{{ req.out_date }}</td>
+                    <td>{{ req.in_date }}</td>
+                    <td>{{ req.place }}</td>
+                    <td><span class="badge badge-{{ req.status|lower }}">{{ req.status }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="icon">📭</div>
+        <p>No gatepass requests found across any branch.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

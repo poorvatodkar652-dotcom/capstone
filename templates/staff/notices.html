@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Notices — Smart Hostel Management{% endblock %}
+
+{% block nav %}
+<div class="nav-links">
+    <a href="{{ url_for('staff.dashboard') }}">📋 Dashboard</a>
+    <a href="{{ url_for('staff.logout') }}">🚪 Logout</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-title">📢 All Notices</div>
+
+    {% if notices %}
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date &amp; Time</th>
+                    <th>Sender</th>
+                    <th>Notice</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for notice in notices %}
+                <tr>
+                    <td>{{ notice.datetime_posted }}</td>
+                    <td>{{ notice.sender_role }}</td>
+                    <td>{{ notice.message }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="icon">📭</div>
+        <p>No notices posted yet.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

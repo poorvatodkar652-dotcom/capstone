@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Gatepass Entry — Smart Hostel Management{% endblock %}
+
+{% block nav %}
+<div class="nav-links">
+    <a href="{{ url_for('security.dashboard') }}">📋 Dashboard</a>
+    <a href="{{ url_for('security.logout') }}">🚪 Logout</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <div class="card-title">🔍 Gatepass Entry (OUT/IN)</div>
+
+    {% if prefill and prefill.enrollment %}
+    <div class="flash-message info" style="margin-bottom: 20px;">
+        ℹ️ Form pre-filled from QR scan. Please verify and update actual dates before submitting.
+    </div>
+    {% endif %}
+
+    <form method="POST">
+        <div class="form-group">
+            <label>Student Enrollment Number <span class="required">*</span></label>
+            <input type="text" name="enrollment" class="form-control" placeholder="Enter student enrollment number"
+                required value="{{ prefill.enrollment if prefill else '' }}">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Actual OUT DateTime <span class="required">*</span></label>
+                <input type="text" name="actual_out" class="form-control" placeholder="YYYY-MM-DD HH:MM" required
+                    pattern="\d{4}-\d{2}-\d{2} \d{2}:\d{2}" title="Format: YYYY-MM-DD HH:MM"
+                    value="{{ prefill.actual_out if prefill else '' }}">
+                <div class="form-hint">Format: YYYY-MM-DD HH:MM</div>
+            </div>
+            <div class="form-group">
+                <label>Actual IN DateTime <span class="required">*</span></label>
+                <input type="text" name="actual_in" class="form-control" placeholder="YYYY-MM-DD HH:MM" required
+                    pattern="\d{4}-\d{2}-\d{2} \d{2}:\d{2}" title="Format: YYYY-MM-DD HH:MM"
+                    value="{{ prefill.actual_in if prefill else '' }}">
+                <div class="form-hint">Format: YYYY-MM-DD HH:MM</div>
+            </div>
+        </div>
+
+        {% if prefill and prefill.place %}
+        <div class="form-group">
+            <label>Destination</label>
+            <input type="text" class="form-control" value="{{ prefill.place }}" disabled
+                style="background: #e9ecef; font-weight: 600;">
+        </div>
+        {% endif %}
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Payment Mode</label>
+                <select name="payment_mode" class="form-control">
+                    <option value="">Select (optional)</option>
+                    <option value="Cash">Cash</option>
+                    <option value="Online">Online</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Verified By</label>
+                <input type="text" name="verified_by" class="form-control" placeholder="Verifier name (optional)">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full btn-lg">Submit OUT/IN Entry</button>
+    </form>
+</div>
+{% endblock %}

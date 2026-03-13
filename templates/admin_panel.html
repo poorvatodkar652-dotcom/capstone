@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Admin Panel — Smart Hostel Management{% endblock %}
+
+{% block nav %}
+<div class="nav-links">
+    <a href="{{ url_for('home.index') }}">🏠 Home</a>
+    <a href="{{ url_for('home.admin_logout') }}">🚪 Logout</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-title">Admin Panel</div>
+    <div class="admin-panel-grid">
+        <a href="{{ url_for('staff.login') }}" class="module-card">
+            <div class="module-icon">👨‍💼</div>
+            <h3>Staff Module</h3>
+            <p>Manage wardens & HOD, approve gatepasses, send notices</p>
+        </a>
+        <a href="{{ url_for('security.login') }}" class="module-card">
+            <div class="module-icon">🛡️</div>
+            <h3>Security Module</h3>
+            <p>Mark student OUT/IN, calculate fines, manage register</p>
+        </a>
+        <a href="{{ url_for('admission.add_student') }}" class="module-card">
+            <div class="module-icon">📝</div>
+            <h3>Admission Module</h3>
+            <p>Add students, track fees, manage admissions</p>
+        </a>
+    </div>
+</div>
+{% endblock %}

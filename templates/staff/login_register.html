@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Staff {{ mode|capitalize }} — Smart Hostel Management{% endblock %}
+
+{% block nav %}
+<div class="nav-links">
+    <a href="{{ url_for('home.index') }}">🏠 Home</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 550px; margin: 0 auto;">
+    <div class="card-title">👨‍💼 Staff Module</div>
+
+    <div class="tab-links">
+        <a href="{{ url_for('staff.login') }}" class="{% if mode == 'login' %}active{% endif %}">Login</a>
+        <a href="{{ url_for('staff.register') }}" class="{% if mode == 'register' %}active{% endif %}">Register</a>
+    </div>
+
+    {% if mode == 'login' %}
+    <form method="POST" action="{{ url_for('staff.login') }}">
+        <div class="form-group">
+            <label>Mobile Number <span class="required">*</span></label>
+            <input type="text" name="mobile" class="form-control" placeholder="10-digit mobile number" required
+                pattern="\d{10}" title="Must be exactly 10 digits" maxlength="10">
+        </div>
+        <div class="form-group">
+            <label>Password <span class="required">*</span></label>
+            <input type="password" name="password" class="form-control" placeholder="Enter your password" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full btn-lg">LOGIN</button>
+    </form>
+    {% else %}
+    <form method="POST" action="{{ url_for('staff.register') }}">
+        <div class="form-group">
+            <label>Full Name <span class="required">*</span></label>
+            <input type="text" name="name" class="form-control" placeholder="Enter full name" required minlength="2">
+        </div>
+        <div class="form-group">
+            <label>Mobile Number <span class="required">*</span></label>
+            <input type="text" name="mobile" class="form-control" placeholder="10-digit mobile number" required
+                pattern="\d{10}" title="Must be exactly 10 digits" maxlength="10">
+            <div class="form-hint">This will be your unique identifier for login</div>
+        </div>
+        <div class="form-group">
+            <label>Date of Birth <span class="required">*</span></label>
+            <input type="date" name="dob" class="form-control" required>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Password <span class="required">*</span></label>
+                <input type="password" name="password" class="form-control" placeholder="Min 4 characters" required
+                    minlength="4">
+            </div>
+            <div class="form-group">
+                <label>Confirm Password <span class="required">*</span></label>
+                <input type="password" name="confirm_password" class="form-control" placeholder="Re-enter password"
+                    required minlength="4">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Role <span class="required">*</span></label>
+                <select name="role" class="form-control" required>
+                    <option value="">Select Role</option>
+                    <option value="Warden">Warden</option>
+                    <option value="HOD">HOD</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Branch <span class="required">*</span></label>
+                <select name="branch" class="form-control" required>
+                    <option value="">Select Branch</option>
+                    {% for b in branches %}
+                    <option value="{{ b }}">{{ b }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Year <span class="required">*</span></label>
+            <select name="year" class="form-control" required>
+                <option value="">Select Year</option>
+                {% for y in years %}
+                <option value="{{ y }}">{{ y }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-success btn-full btn-lg">REGISTER</button>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}

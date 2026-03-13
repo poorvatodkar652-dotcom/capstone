@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Send Notice — Smart Hostel Management{% endblock %}
+
+{% block nav %}
+<div class="nav-links">
+    <a href="{{ url_for('security.dashboard') }}">📋 Dashboard</a>
+    <a href="{{ url_for('security.logout') }}">🚪 Logout</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <div class="card-title">📝 Send Notice</div>
+    <form method="POST">
+        <div class="form-group">
+            <label>Notice Message <span class="required">*</span></label>
+            <textarea name="message" class="form-control" placeholder="Type your notice message here..."
+                required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full btn-lg">Send Notice</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Student Dashboard — Smart Hostel Management{% endblock %}
+
+{% block nav %}
+<div class="nav-links">
+    <a href="{{ url_for('home.index') }}">🏠 Home</a>
+    <a href="{{ url_for('student.logout') }}">🚪 Logout</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <div class="welcome-text">Welcome, <span>{{ student_name }}</span>!</div>
+    <div class="dashboard-actions">
+        <a href="{{ url_for('student.gatepass_request') }}" class="btn btn-primary">📋 Gatepass Request</a>
+        <a href="{{ url_for('student.request_status') }}" class="btn btn-accent">📊 Request &amp; Fine Status</a>
+        <a href="{{ url_for('student.notices') }}" class="btn btn-outline">📢 Notice Board</a>
+        <a href="{{ url_for('student.logout') }}" class="btn btn-danger">🚪 Logout</a>
+    </div>
+</div>
+{% endblock %}

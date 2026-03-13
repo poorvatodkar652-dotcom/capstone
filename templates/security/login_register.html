@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Security {{ mode|capitalize }} — Smart Hostel Management{% endblock %}
+
+{% block nav %}
+<div class="nav-links">
+    <a href="{{ url_for('home.index') }}">🏠 Home</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 500px; margin: 0 auto;">
+    <div class="card-title">🛡️ Security Module</div>
+
+    <div class="tab-links">
+        <a href="{{ url_for('security.login') }}" class="{% if mode == 'login' %}active{% endif %}">Login</a>
+        <a href="{{ url_for('security.register') }}" class="{% if mode == 'register' %}active{% endif %}">Register</a>
+    </div>
+
+    {% if mode == 'login' %}
+    <form method="POST" action="{{ url_for('security.login') }}">
+        <div class="form-group">
+            <label>Mobile Number <span class="required">*</span></label>
+            <input type="text" name="mobile" class="form-control" placeholder="10-digit mobile number" required
+                pattern="\d{10}" title="Must be exactly 10 digits" maxlength="10">
+        </div>
+        <div class="form-group">
+            <label>Password <span class="required">*</span></label>
+            <input type="password" name="password" class="form-control" placeholder="Enter your password" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full btn-lg">LOGIN</button>
+    </form>
+    {% else %}
+    <form method="POST" action="{{ url_for('security.register') }}">
+        <div class="form-group">
+            <label>Full Name <span class="required">*</span></label>
+            <input type="text" name="name" class="form-control" placeholder="Enter full name" required minlength="2">
+        </div>
+        <div class="form-group">
+            <label>Mobile Number <span class="required">*</span></label>
+            <input type="text" name="mobile" class="form-control" placeholder="10-digit mobile number" required
+                pattern="\d{10}" title="Must be exactly 10 digits" maxlength="10">
+            <div class="form-hint">This will be your unique identifier for login</div>
+        </div>
+        <div class="form-group">
+            <label>Date of Birth <span class="required">*</span></label>
+            <input type="date" name="dob" class="form-control" required>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Password <span class="required">*</span></label>
+                <input type="password" name="password" class="form-control" placeholder="Min 4 characters" required
+                    minlength="4">
+            </div>
+            <div class="form-group">
+                <label>Confirm Password <span class="required">*</span></label>
+                <input type="password" name="confirm_password" class="form-control" placeholder="Re-enter password"
+                    required minlength="4">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Gender <span class="required">*</span></label>
+            <select name="gender" class="form-control" required>
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-success btn-full btn-lg">REGISTER</button>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}
