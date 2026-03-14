@@ -1,6 +1,7 @@
 import re
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from models import db, Staff, GatepassRequest, Notice
 
@@ -30,14 +31,20 @@ def login():
                 flash(e, 'error')
             return render_template('staff/login_register.html', mode='login')
 
-        staff = Staff.query.filter_by(
-            mobile_number=mobile, password=password
-        ).first()
+        try:
+            staff = Staff.query.filter_by(
+                mobile_number=mobile
+            ).first()
+        except Exception:
+            db.session.rollback()
+            flash('Something went wrong. Please try again.', 'error')
+            return render_template('staff/login_register.html', mode='login')
 
-        if not staff:
+        if not staff or not check_password_hash(staff.password, password):
             flash('Invalid mobile number or password.', 'error')
             return render_template('staff/login_register.html', mode='login')
 
+        session.permanent = True
         session['staff_mobile'] = staff.mobile_number
         session['staff_name'] = staff.name
         session['staff_role'] = staff.role
@@ -94,23 +101,29 @@ def register():
             return render_template('staff/login_register.html',
                                    branches=BRANCHES, years=YEARS, mode='register')
 
-        existing = Staff.query.get(mobile)
-        if existing:
-            flash('This mobile number is already registered.', 'error')
+        try:
+            existing = Staff.query.get(mobile)
+            if existing:
+                flash('This mobile number is already registered. Please use a different number or login.', 'error')
+                return render_template('staff/login_register.html',
+                                       branches=BRANCHES, years=YEARS, mode='register')
+
+            new_staff = Staff(
+                mobile_number=mobile,
+                name=name,
+                dob=dob,
+                password=generate_password_hash(password),
+                role=role,
+                branch=branch,
+                year=year
+            )
+            db.session.add(new_staff)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            flash('Something went wrong during registration. Please try again.', 'error')
             return render_template('staff/login_register.html',
                                    branches=BRANCHES, years=YEARS, mode='register')
-
-        new_staff = Staff(
-            mobile_number=mobile,
-            name=name,
-            dob=dob,
-            password=password,
-            role=role,
-            branch=branch,
-            year=year
-        )
-        db.session.add(new_staff)
-        db.session.commit()
 
         flash('Staff registered successfully! You can now login.', 'success')
         return redirect(url_for('staff.login'))

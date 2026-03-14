@@ -1,7 +1,9 @@
+import io
 import os
 import re
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app, send_file
+from werkzeug.security import check_password_hash
 import qrcode
 
 from models import db, Student, GatepassRequest, Notice
@@ -37,13 +39,14 @@ def login():
             return render_template('student/login.html', branches=BRANCHES, years=YEARS)
 
         student = Student.query.filter_by(
-            enrollment=enrollment, password=password, branch=branch, year=year
+            enrollment=enrollment, branch=branch, year=year
         ).first()
 
-        if not student:
+        if not student or not check_password_hash(student.password, password):
             flash('Invalid Enrollment or Password.', 'error')
             return render_template('student/login.html', branches=BRANCHES, years=YEARS)
 
+        session.permanent = True
         session['student_enrollment'] = student.enrollment
         session['student_name'] = student.student_name
         session['student_branch'] = student.branch
@@ -114,24 +117,6 @@ def gatepass_request():
         branch = session['student_branch']
         year = session['student_year']
 
-        # Generate QR Code with URL that auto-fills the security gatepass entry form
-        qr_dir = os.path.join(current_app.static_folder, 'qr_codes')
-        os.makedirs(qr_dir, exist_ok=True)
-        qr_filename = f"QR_{enrollment}_{datetime.now().strftime('%Y%m%d%H%M%S')}.png"
-        qr_filepath = os.path.join(qr_dir, qr_filename)
-
-        # Build the URL that security will scan — it pre-fills the gatepass entry form
-        from urllib.parse import urlencode
-        qr_params = urlencode({
-            'enrollment': enrollment,
-            'out_date': out_date,
-            'in_date': in_date,
-            'place': place
-        })
-        qr_url = f"{request.host_url.rstrip('/')}/security/gatepass-entry?{qr_params}"
-        qr_img = qrcode.make(qr_url)
-        qr_img.save(qr_filepath)
-
         new_request = GatepassRequest(
             enrollment=enrollment,
             student_name=student_name,
@@ -142,7 +127,7 @@ def gatepass_request():
             in_date=in_date,
             place=place,
             status='Pending',
-            qr_file=qr_filename,
+            qr_file='',
             actual_out_date='',
             actual_in_date='',
             late_days=0,
@@ -186,16 +171,28 @@ def download_qr(req_id):
         flash('Request not found.', 'error')
         return redirect(url_for('student.request_status'))
 
-    if gatepass.status != 'Approved' or not gatepass.qr_file:
+    if gatepass.status != 'Approved':
         flash('QR code only available for approved requests.', 'error')
         return redirect(url_for('student.request_status'))
 
-    qr_path = os.path.join(current_app.static_folder, 'qr_codes', gatepass.qr_file)
-    if not os.path.exists(qr_path):
-        flash('QR code file not found.', 'error')
-        return redirect(url_for('student.request_status'))
+    # Generate QR code in-memory (not saved to disk)
+    from urllib.parse import urlencode
+    qr_params = urlencode({
+        'enrollment': gatepass.enrollment,
+        'out_date': gatepass.out_date,
+        'in_date': gatepass.in_date,
+        'place': gatepass.place
+    })
+    qr_url = f"{request.host_url.rstrip('/')}/security/gatepass-entry?{qr_params}"
+    qr_img = qrcode.make(qr_url)
 
-    return send_file(qr_path, as_attachment=True, download_name=gatepass.qr_file)
+    # Save to in-memory buffer and send directly
+    buffer = io.BytesIO()
+    qr_img.save(buffer, format='PNG')
+    buffer.seek(0)
+
+    filename = f"QR_{gatepass.enrollment}_{gatepass.id}.png"
+    return send_file(buffer, mimetype='image/png', as_attachment=True, download_name=filename)
 
 
 # ===================== NOTICE BOARD =====================

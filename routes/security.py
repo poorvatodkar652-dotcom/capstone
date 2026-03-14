@@ -1,6 +1,7 @@
 import re
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from models import db, SecurityGuard, GatepassRequest, Notice
 
@@ -42,14 +43,20 @@ def login():
                 flash(e, 'error')
             return render_template('security/login_register.html', mode='login')
 
-        guard = SecurityGuard.query.filter_by(
-            mobile_number=mobile, password=password
-        ).first()
+        try:
+            guard = SecurityGuard.query.filter_by(
+                mobile_number=mobile
+            ).first()
+        except Exception:
+            db.session.rollback()
+            flash('Something went wrong. Please try again.', 'error')
+            return render_template('security/login_register.html', mode='login')
 
-        if not guard:
+        if not guard or not check_password_hash(guard.password, password):
             flash('Invalid mobile number or password.', 'error')
             return render_template('security/login_register.html', mode='login')
 
+        session.permanent = True
         session['security_mobile'] = guard.mobile_number
         session['security_name'] = guard.name
         flash(f'Welcome, {guard.name}!', 'success')
@@ -96,20 +103,25 @@ def register():
                 flash(e, 'error')
             return render_template('security/login_register.html', mode='register')
 
-        existing = SecurityGuard.query.get(mobile)
-        if existing:
-            flash('This mobile number is already registered.', 'error')
-            return render_template('security/login_register.html', mode='register')
+        try:
+            existing = SecurityGuard.query.get(mobile)
+            if existing:
+                flash('This mobile number is already registered. Please use a different number or login.', 'error')
+                return render_template('security/login_register.html', mode='register')
 
-        new_guard = SecurityGuard(
-            mobile_number=mobile,
-            name=name,
-            dob=dob,
-            password=password,
-            gender=gender
-        )
-        db.session.add(new_guard)
-        db.session.commit()
+            new_guard = SecurityGuard(
+                mobile_number=mobile,
+                name=name,
+                dob=dob,
+                password=generate_password_hash(password),
+                gender=gender
+            )
+            db.session.add(new_guard)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            flash('Something went wrong during registration. Please try again.', 'error')
+            return render_template('security/login_register.html', mode='register')
 
         flash('Security guard registered successfully! You can now login.', 'success')
         return redirect(url_for('security.login'))

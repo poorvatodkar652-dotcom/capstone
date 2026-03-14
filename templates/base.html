@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <title>{% block title %}Smart Hostel Management{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
+
 <body>
     <!-- Header -->
     <header class="header">
@@ -17,6 +19,7 @@
     </header>
 
     <!-- Flash Messages -->
+    {% block flash_messages %}
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
     <div class="flash-container">
@@ -29,6 +32,7 @@
     </div>
     {% endif %}
     {% endwith %}
+    {% endblock %}
 
     <!-- Main Content -->
     <div class="main-content">
@@ -41,5 +45,28 @@
     </footer>
 
     {% block scripts %}{% endblock %}
+
+    <script>
+        // Auto-dismiss flash messages after 5 seconds
+        document.querySelectorAll('.flash-message').forEach(function (msg) {
+            setTimeout(function () {
+                msg.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                msg.style.opacity = '0';
+                msg.style.transform = 'translateY(-10px)';
+                setTimeout(function () { msg.remove(); }, 500);
+            }, 5000);
+        });
+
+        // Auto-dismiss inline alerts after 8 seconds
+        document.querySelectorAll('.inline-alert').forEach(function (alert) {
+            setTimeout(function () {
+                alert.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                alert.style.opacity = '0';
+                alert.style.transform = 'translateX(-10px)';
+                setTimeout(function () { alert.remove(); }, 500);
+            }, 8000);
+        });
+    </script>
 </body>
+
 </html>

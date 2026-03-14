@@ -1,5 +1,6 @@
 import re
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from werkzeug.security import generate_password_hash
 
 from models import db, Student
 
@@ -78,36 +79,42 @@ def add_student():
             return render_template('admission/add_student.html',
                                    branches=BRANCHES, years=YEARS)
 
-        # Check duplicate
-        existing = Student.query.get(enrollment)
-        if existing:
-            flash('A student with this enrollment number already exists.', 'error')
+        try:
+            # Check duplicate
+            existing = Student.query.get(enrollment)
+            if existing:
+                flash('A student with this enrollment number already exists.', 'error')
+                return render_template('admission/add_student.html',
+                                       branches=BRANCHES, years=YEARS)
+
+            remaining = total_fees - paid_fees
+            if remaining == 0:
+                status = 'Paid'
+            elif paid_fees > 0:
+                status = 'Partial'
+            else:
+                status = 'Due'
+
+            new_student = Student(
+                enrollment=enrollment,
+                student_name=name,
+                hostel_name=hostel,
+                room_number=room,
+                branch=branch,
+                year=year,
+                password=generate_password_hash(password),
+                total_fees=total_fees,
+                paid_fees=paid_fees,
+                remaining_fees=remaining,
+                fees_status=status
+            )
+            db.session.add(new_student)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            flash('Something went wrong. Please try again.', 'error')
             return render_template('admission/add_student.html',
                                    branches=BRANCHES, years=YEARS)
-
-        remaining = total_fees - paid_fees
-        if remaining == 0:
-            status = 'Paid'
-        elif paid_fees > 0:
-            status = 'Partial'
-        else:
-            status = 'Due'
-
-        new_student = Student(
-            enrollment=enrollment,
-            student_name=name,
-            hostel_name=hostel,
-            room_number=room,
-            branch=branch,
-            year=year,
-            password=password,
-            total_fees=total_fees,
-            paid_fees=paid_fees,
-            remaining_fees=remaining,
-            fees_status=status
-        )
-        db.session.add(new_student)
-        db.session.commit()
 
         flash('✅ Student added successfully!', 'success')
         return render_template('admission/add_student.html',

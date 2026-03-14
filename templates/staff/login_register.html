@@ -7,9 +7,25 @@
 </div>
 {% endblock %}
 
+{% block flash_messages %}{% endblock %}
+
 {% block content %}
 <div class="card" style="max-width: 550px; margin: 0 auto;">
     <div class="card-title">👨‍💼 Staff Module</div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="inline-alerts">
+        {% for category, message in messages %}
+        <div class="inline-alert {{ category }}">
+            {% if category == 'success' %}✅{% elif category == 'error' %}⚠️{% else %}ℹ️{% endif %}
+            {{ message }}
+            <button type="button" class="alert-dismiss" onclick="this.parentElement.remove()">&times;</button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
 
     <div class="tab-links">
         <a href="{{ url_for('staff.login') }}" class="{% if mode == 'login' %}active{% endif %}">Login</a>

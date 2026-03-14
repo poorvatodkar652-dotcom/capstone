@@ -1,5 +1,6 @@
 import os
-from flask import Flask
+from datetime import timedelta
+from flask import Flask, flash, redirect, url_for, render_template
 from dotenv import load_dotenv
 from models import db
 
@@ -11,6 +12,7 @@ def create_app():
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'hostel-secret-key-2026')
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
     db.init_app(app)
 
@@ -30,7 +32,17 @@ def create_app():
     # Create tables and QR directory
     with app.app_context():
         db.create_all()
-        os.makedirs(os.path.join(app.static_folder, 'qr_codes'), exist_ok=True)
+
+    # Custom error handlers — never show raw Flask errors to users
+    @app.errorhandler(404)
+    def not_found(e):
+        flash('Page not found.', 'error')
+        return redirect(url_for('home.index'))
+
+    @app.errorhandler(500)
+    def server_error(e):
+        flash('Something went wrong. Please try again.', 'error')
+        return redirect(url_for('home.index'))
 
     return app
 
