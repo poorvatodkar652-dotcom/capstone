@@ -13,7 +13,7 @@ class Student(db.Model):
     room_number = db.Column(db.String(20), nullable=False)
     branch = db.Column(db.String(10), nullable=False)
     year = db.Column(db.String(5), nullable=False)
-    password = db.Column(db.String(100), nullable=False)
+    password = db.Column(db.String(256), nullable=False)
     total_fees = db.Column(db.Float, nullable=False, default=0)
     paid_fees = db.Column(db.Float, nullable=False, default=0)
     remaining_fees = db.Column(db.Float, nullable=False, default=0)
@@ -31,7 +31,7 @@ class Staff(db.Model):
     mobile_number = db.Column(db.String(15), primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     dob = db.Column(db.String(15), nullable=False)
-    password = db.Column(db.String(100), nullable=False)
+    password = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(20), nullable=False)  # Warden / HOD
     branch = db.Column(db.String(10), nullable=False)
     year = db.Column(db.String(5), nullable=False)
@@ -46,7 +46,7 @@ class SecurityGuard(db.Model):
     mobile_number = db.Column(db.String(15), primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     dob = db.Column(db.String(15), nullable=False)
-    password = db.Column(db.String(100), nullable=False)
+    password = db.Column(db.String(256), nullable=False)
     gender = db.Column(db.String(10), nullable=False)
 
     def __repr__(self):
