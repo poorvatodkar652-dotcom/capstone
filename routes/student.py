@@ -39,19 +39,19 @@ def login():
             return render_template('student/login.html', branches=BRANCHES, years=YEARS)
 
         student = Student.query.filter_by(
-            enrollment=enrollment, branch=branch, year=year
+            enrollment_no=enrollment, branch=branch, year=year
         ).first()
 
-        if not student or not check_password_hash(student.password, password):
+        if not student or not check_password_hash(student.password_hash, password):
             flash('Invalid Enrollment or Password.', 'error')
             return render_template('student/login.html', branches=BRANCHES, years=YEARS)
 
         session.permanent = True
-        session['student_enrollment'] = student.enrollment
-        session['student_name'] = student.student_name
+        session['student_enrollment'] = student.enrollment_no
+        session['student_name'] = student.full_name
         session['student_branch'] = student.branch
         session['student_year'] = student.year
-        flash(f'Welcome, {student.student_name}!', 'success')
+        flash(f'Welcome, {student.full_name}!', 'success')
         return redirect(url_for('student.dashboard'))
 
     return render_template('student/login.html', branches=BRANCHES, years=YEARS)
@@ -113,31 +113,50 @@ def gatepass_request():
             return render_template('student/gatepass_request.html')
 
         enrollment = session['student_enrollment']
-        student_name = session['student_name']
-        branch = session['student_branch']
-        year = session['student_year']
+        
+        # We don't save branch, year, student_name in GatepassRequest anymore
+        # We just link enrollment_no.
 
         new_request = GatepassRequest(
-            enrollment=enrollment,
-            student_name=student_name,
-            branch=branch,
-            year=year,
+            enrollment_no=enrollment,
             reason=reason,
-            out_date=out_date,
-            in_date=in_date,
+            out_date=datetime.strptime(out_date, '%Y-%m-%d %H:%M'),
+            in_date=datetime.strptime(in_date, '%Y-%m-%d %H:%M'),
             place=place,
             status='Pending',
-            qr_file='',
-            actual_out_date='',
-            actual_in_date='',
-            late_days=0,
-            fine=0,
-            fine_status='No Fine',
-            reject_reason='',
-            request_datetime=datetime.now().strftime('%Y-%m-%d %H:%M')
+            qr_file_path='',
+            request_datetime=datetime.utcnow()
         )
         db.session.add(new_request)
         db.session.commit()
+
+        # --- Email Notification to Warden ---
+        try:
+            from models import Staff
+            from utils.email import send_email
+            
+            # Find warden for this student's branch and year
+            student_branch = session['student_branch']
+            student_year = session['student_year']
+            student_name = session['student_name']
+            
+            warden = Staff.query.filter_by(role='Warden', branch=student_branch, year=student_year).first()
+            if warden and warden.email:
+                subject = f"New Gatepass Request: {student_name} ({enrollment})"
+                body = f"""
+                <h3>New Gatepass Request</h3>
+                <p><strong>Student:</strong> {student_name} ({enrollment})</p>
+                <p><strong>Place:</strong> {place}</p>
+                <p><strong>Out Date:</strong> {out_date}</p>
+                <p><strong>In Date:</strong> {in_date}</p>
+                <p><strong>Reason:</strong> {reason}</p>
+                <br>
+                <p>Please login to the portal to approve or reject this request.</p>
+                """
+                send_email(warden.email, subject, body)
+        except Exception as e:
+            print(f"Error sending email to Warden: {e}")
+        # ------------------------------------
 
         flash('✅ Gatepass request submitted successfully! Staff approval pending.', 'success')
         return redirect(url_for('student.dashboard'))
@@ -153,8 +172,8 @@ def request_status():
         return redirect(url_for('student.login'))
 
     enrollment = session['student_enrollment']
-    requests_list = GatepassRequest.query.filter_by(enrollment=enrollment).order_by(
-        GatepassRequest.id.desc()
+    requests_list = GatepassRequest.query.filter_by(enrollment_no=enrollment).order_by(
+        GatepassRequest.request_id.desc()
     ).all()
     return render_template('student/request_status.html', requests=requests_list)
 
@@ -167,7 +186,7 @@ def download_qr(req_id):
         return redirect(url_for('student.login'))
 
     gatepass = GatepassRequest.query.get(req_id)
-    if not gatepass or gatepass.enrollment != session['student_enrollment']:
+    if not gatepass or gatepass.enrollment_no != session['student_enrollment']:
         flash('Request not found.', 'error')
         return redirect(url_for('student.request_status'))
 
@@ -178,9 +197,10 @@ def download_qr(req_id):
     # Generate QR code in-memory (not saved to disk)
     from urllib.parse import urlencode
     qr_params = urlencode({
-        'enrollment': gatepass.enrollment,
-        'out_date': gatepass.out_date,
-        'in_date': gatepass.in_date,
+        'request_id': gatepass.request_id,
+        'enrollment': gatepass.enrollment_no,
+        'out_date': gatepass.out_date.strftime('%Y-%m-%d %H:%M:%S'),
+        'in_date': gatepass.in_date.strftime('%Y-%m-%d %H:%M:%S'),
         'place': gatepass.place
     })
     qr_url = f"{request.host_url.rstrip('/')}/security/gatepass-entry?{qr_params}"
@@ -191,7 +211,7 @@ def download_qr(req_id):
     qr_img.save(buffer, format='PNG')
     buffer.seek(0)
 
-    filename = f"QR_{gatepass.enrollment}_{gatepass.id}.png"
+    filename = f"QR_{gatepass.enrollment_no}_{gatepass.request_id}.png"
     return send_file(buffer, mimetype='image/png', as_attachment=True, download_name=filename)
 
 
@@ -202,7 +222,7 @@ def notices():
         flash('Please login first.', 'error')
         return redirect(url_for('student.login'))
 
-    notices_list = Notice.query.order_by(Notice.id.desc()).all()
+    notices_list = Notice.query.order_by(Notice.notice_id.desc()).all()
     return render_template('student/notices.html', notices=notices_list)
 
 

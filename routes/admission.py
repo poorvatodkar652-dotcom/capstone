@@ -19,6 +19,7 @@ def add_student():
     if request.method == 'POST':
         enrollment = request.form.get('enrollment', '').strip()
         name = request.form.get('name', '').strip()
+        email = request.form.get('email', '').strip()
         hostel = request.form.get('hostel', '').strip()
         room = request.form.get('room', '').strip()
         branch = request.form.get('branch', '').strip()
@@ -34,6 +35,10 @@ def add_student():
             errors.append('Student name is required.')
         elif len(name) < 2:
             errors.append('Student name must be at least 2 characters.')
+        if not email:
+            errors.append('Student email is required.')
+        elif not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
+            errors.append('Invalid email format for student.')
         if not hostel:
             errors.append('Hostel name is required.')
         if not room:
@@ -81,7 +86,7 @@ def add_student():
 
         try:
             # Check duplicate
-            existing = Student.query.get(enrollment)
+            existing = Student.query.filter_by(enrollment_no=enrollment).first()
             if existing:
                 flash('A student with this enrollment number already exists.', 'error')
                 return render_template('admission/add_student.html',
@@ -96,17 +101,18 @@ def add_student():
                 status = 'Due'
 
             new_student = Student(
-                enrollment=enrollment,
-                student_name=name,
+                enrollment_no=enrollment,
+                full_name=name,
+                email=email,
                 hostel_name=hostel,
                 room_number=room,
                 branch=branch,
                 year=year,
-                password=generate_password_hash(password),
+                password_hash=generate_password_hash(password),
                 total_fees=total_fees,
                 paid_fees=paid_fees,
                 remaining_fees=remaining,
-                fees_status=status
+                fee_status=status
             )
             db.session.add(new_student)
             db.session.commit()

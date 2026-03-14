@@ -29,9 +29,11 @@ def create_app():
     app.register_blueprint(security_bp, url_prefix='/security')
     app.register_blueprint(admission_bp, url_prefix='/admission')
 
-    # Create tables and QR directory
+    # Create tables and seed lookup tables
     with app.app_context():
         db.create_all()
+        from models import seed_lookup_tables
+        seed_lookup_tables(db.session)
 
     # Custom error handlers — never show raw Flask errors to users
     @app.errorhandler(404)

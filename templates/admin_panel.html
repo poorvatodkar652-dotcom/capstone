@@ -2,30 +2,25 @@
 {% block title %}Admin Panel — Smart Hostel Management{% endblock %}
 
 {% block nav %}
-<div class="nav-links">
-    <a href="{{ url_for('home.index') }}">🏠 Home</a>
-    <a href="{{ url_for('home.admin_logout') }}">🚪 Logout</a>
+<div class="flex space-x-4">
+    <a href="{{ url_for('home.index') }}"
+        class="text-white hover:text-yellow-300 font-medium transition-colors border border-transparent hover:border-yellow-300 px-3 py-1 rounded-md"><svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+        Home</a>
+    <a href="{{ url_for('home.admin_logout') }}"
+        class="bg-red-600 hover:bg-red-700 text-white font-medium transition-colors px-3 py-1 rounded-md shadow"><svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+        Logout</a>
 </div>
 {% endblock %}
 
 {% block content %}
-<div class="card">
-    <div class="card-title">Admin Panel</div>
-    <div class="admin-panel-grid">
-        <a href="{{ url_for('staff.login') }}" class="module-card">
-            <div class="module-icon">👨‍💼</div>
-            <h3>Staff Module</h3>
-            <p>Manage wardens & HOD, approve gatepasses, send notices</p>
-        </a>
-        <a href="{{ url_for('security.login') }}" class="module-card">
-            <div class="module-icon">🛡️</div>
-            <h3>Security Module</h3>
-            <p>Mark student OUT/IN, calculate fines, manage register</p>
-        </a>
-        <a href="{{ url_for('admission.add_student') }}" class="module-card">
-            <div class="module-icon">📝</div>
-            <h3>Admission Module</h3>
-            <p>Add students, track fees, manage admissions</p>
+<div class="bg-white rounded-xl shadow-lg border border-gray-100 p-8 max-w-5xl mx-auto mt-8">
+    <div class="text-2xl font-bold text-center text-blue-900 mb-10 pb-4 border-b">Admin Panel</div>
+    <div class="flex justify-center flex-wrap gap-8">
+        <a href="{{ url_for('admission.add_student') }}"
+            class="block p-8 bg-gray-50 rounded-xl border border-gray-200 hover:border-blue-500 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 text-center group w-full max-w-sm">
+            <div class="text-5xl mb-4 group-hover:scale-110 transition-transform"><svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></div>
+            <h3 class="text-xl font-bold text-blue-900 mb-2">Admission Module</h3>
+            <p class="text-gray-600">Add students, track fees, manage admissions</p>
         </a>
     </div>
 </div>

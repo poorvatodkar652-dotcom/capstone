@@ -2,61 +2,86 @@
 {% block title %}Request Status — Smart Hostel Management{% endblock %}
 
 {% block nav %}
-<div class="nav-links">
-    <a href="{{ url_for('student.dashboard') }}">📋 Dashboard</a>
-    <a href="{{ url_for('student.logout') }}">🚪 Logout</a>
+<div class="flex space-x-4">
+    <a href="{{ url_for('student.dashboard') }}"
+        class="text-white hover:text-yellow-300 font-medium transition-colors border border-transparent hover:border-yellow-300 px-3 py-1 rounded-md"><svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+        Dashboard</a>
+    <a href="{{ url_for('student.logout') }}"
+        class="bg-red-600 hover:bg-red-700 text-white font-medium transition-colors px-3 py-1 rounded-md shadow"><svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+        Logout</a>
 </div>
 {% endblock %}
 
 {% block content %}
-<div class="card">
-    <div class="card-title">📊 Request &amp; Fine Status</div>
+<div class="bg-white rounded-xl shadow-lg border border-gray-100 p-8 max-w-7xl mx-auto mt-8">
+    <div class="text-2xl font-bold text-center text-blue-900 mb-8 pb-4 border-b"><svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg> Request &amp; Fine Status</div>
 
     {% if requests %}
-    <div class="table-wrapper">
-        <table>
-            <thead>
+    <div class="overflow-x-auto shadow ring-1 ring-black ring-opacity-5 rounded-lg">
+        <table class="min-w-full divide-y divide-gray-300">
+            <thead class="bg-gray-50">
                 <tr>
-                    <th>Out Date</th>
-                    <th>In Date</th>
-                    <th>Place</th>
-                    <th>Status</th>
-                    <th>Actual In</th>
-                    <th>Late Days</th>
-                    <th>Fine (₹)</th>
-                    <th>Fine Status</th>
-                    <th>Reject Reason</th>
-                    <th>QR Code</th>
+                    <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Out
+                        Date</th>
+                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">In Date</th>
+                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Place</th>
+                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
+                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Actual In</th>
+                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Late Days</th>
+                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Fine (₹)</th>
+                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Fine Status</th>
+                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Reject Reason</th>
+                    <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                        <span class="sr-only">Actions</span>
+                    </th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="divide-y divide-gray-200 bg-white">
                 {% for req in requests %}
                 <tr>
-                    <td data-label="Out Date">{{ req.out_date }}</td>
-                    <td data-label="In Date">{{ req.in_date }}</td>
-                    <td data-label="Place">{{ req.place }}</td>
-                    <td data-label="Status">
-                        <span class="badge badge-{{ req.status|lower }}">{{ req.status }}</span>
+                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">{{
+                        req.out_date.strftime('%Y-%m-%d %H:%M') if req.out_date else '' }}</td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ req.in_date.strftime('%Y-%m-%d
+                        %H:%M') if req.in_date else '' }}</td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ req.place }}</td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        <span
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if req.status == 'Approved' %}bg-green-100 text-green-800{% elif req.status == 'Rejected' %}bg-red-100 text-red-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                            {{ req.status }}
+                        </span>
                     </td>
-                    <td data-label="Actual In">{{ req.actual_in_date or '—' }}</td>
-                    <td data-label="Late Days">{{ req.late_days }}</td>
-                    <td data-label="Fine (₹)">{{ req.fine }}</td>
-                    <td data-label="Fine Status">
-                        {% if req.fine_status == 'No Fine' %}
-                        <span class="badge badge-no-fine">{{ req.fine_status }}</span>
-                        {% elif req.fine_status == 'Unpaid' %}
-                        <span class="badge badge-unpaid">{{ req.fine_status }}</span>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{
+                        req.entry.actual_in_datetime.strftime('%Y-%m-%d %H:%M') if req.entry and
+                        req.entry.actual_in_datetime else '—' }}</td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ req.entry.late_days if req.entry
+                        else 0 }}</td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ req.entry.fine_amount if req.entry
+                        else 0 }}</td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        {% if not req.entry or req.entry.fine_status == 'No Fine' %}
+                        <span
+                            class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">{{
+                            req.entry.fine_status if req.entry else 'No Fine' }}</span>
+                        {% elif req.entry.fine_status == 'Unpaid' %}
+                        <span
+                            class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">{{
+                            req.entry.fine_status }}</span>
                         {% else %}
-                        <span class="badge badge-paid">{{ req.fine_status }}</span>
+                        <span
+                            class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">{{
+                            req.entry.fine_status }}</span>
                         {% endif %}
                     </td>
-                    <td data-label="Reject Reason">{{ req.reject_reason or '—' }}</td>
-                    <td data-label="QR Code">
+                    <td class="px-3 py-4 text-sm text-gray-500 max-w-xs truncate" title="{{ req.reject_reason }}">{{
+                        req.reject_reason or '—' }}</td>
+                    <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                         {% if req.status == 'Approved' %}
-                        <a href="{{ url_for('student.download_qr', req_id=req.id) }}" class="btn btn-primary"
-                            style="padding: 6px 14px; font-size: 0.85rem;">📥 Download</a>
+                        <a href="{{ url_for('student.download_qr', req_id=req.request_id) }}"
+                            class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <span class="mr-1 hidden sm:inline">📥</span> Download
+                        </a>
                         {% else %}
-                        —
+                        <span class="text-gray-400">—</span>
                         {% endif %}
                     </td>
                 </tr>
@@ -65,9 +90,10 @@
         </table>
     </div>
     {% else %}
-    <div class="empty-state">
-        <div class="icon">📭</div>
-        <p>No gatepass requests found.</p>
+    <div class="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+        <div class="text-4xl mb-3"><svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg></div>
+        <h3 class="text-sm font-medium text-gray-900">No requests found</h3>
+        <p class="mt-1 text-sm text-gray-500">You haven't submitted any gatepass requests yet.</p>
     </div>
     {% endif %}
 </div>
