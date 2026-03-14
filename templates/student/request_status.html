@@ -52,7 +52,7 @@
                     </td>
                     <td data-label="Reject Reason">{{ req.reject_reason or '—' }}</td>
                     <td data-label="QR Code">
-                        {% if req.status == 'Approved' and req.qr_file %}
+                        {% if req.status == 'Approved' %}
                         <a href="{{ url_for('student.download_qr', req_id=req.id) }}" class="btn btn-primary"
                             style="padding: 6px 14px; font-size: 0.85rem;">📥 Download</a>
                         {% else %}
