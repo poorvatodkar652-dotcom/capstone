@@ -153,7 +153,7 @@ class GatepassRequest(db.Model):
     in_date          = Column(DateTime,    nullable=False)
     place            = Column(String(200), nullable=False)
     status           = Column(String(10),  nullable=False, default="Pending")
-    qr_file_path     = Column(String(500), nullable=True)    # set after QR is generated
+    auth_code        = Column(String(500), nullable=True)    # 6-character alphanumeric code
     reject_reason    = Column(Text,        nullable=True)    # set only on rejection
     request_datetime = Column(DateTime,    nullable=False, default=datetime.utcnow)
 

@@ -104,6 +104,41 @@ def dashboard():
                            pending_return=pending_return)
 
 
+# ===================== VERIFY CODE =====================
+@security_bp.route('/verify-code', methods=['POST'])
+def verify_code():
+    if 'security_mobile' not in session:
+        flash('Please login first.', 'error')
+        return redirect(url_for('security.login'))
+
+    auth_code = request.form.get('auth_code', '').strip().upper()
+    if not auth_code:
+        flash('Please enter an authorization code.', 'error')
+        return redirect(url_for('security.dashboard'))
+
+    gatepass = GatepassRequest.query.filter_by(auth_code=auth_code).first()
+
+    if not gatepass:
+        flash('Invalid Authorization Code.', 'error')
+        return redirect(url_for('security.dashboard'))
+
+    if gatepass.status != 'Approved':
+        flash('Gatepass Request is not approved or has already been used.', 'error')
+        return redirect(url_for('security.dashboard'))
+
+    # Redirect to gatepass entry with pre-filled details
+    from urllib.parse import urlencode
+    qr_params = urlencode({
+        'request_id': gatepass.request_id,
+        'enrollment': gatepass.enrollment_no,
+        'out_date': gatepass.out_date.strftime('%Y-%m-%d %H:%M:%S'),
+        'in_date': gatepass.in_date.strftime('%Y-%m-%d %H:%M:%S'),
+        'place': gatepass.place
+    })
+    return redirect(f"{url_for('security.gatepass_entry')}?{qr_params}")
+
+
+
 # ===================== GATEPASS ENTRY =====================
 @security_bp.route('/gatepass-entry', methods=['GET', 'POST'])
 def gatepass_entry():
@@ -111,14 +146,31 @@ def gatepass_entry():
         flash('Please login first.', 'error')
         return redirect(url_for('security.login'))
 
-    # Pre-fill from QR scan URL parameters
+    # Pre-fill from QR scan URL parameters (and database)
     prefill = {
-        'request_id': request.args.get('request_id', ''),
-        'enrollment': request.args.get('enrollment', ''),
-        'out_date': request.args.get('out_date', ''),
-        'in_date': request.args.get('in_date', ''),
-        'place': request.args.get('place', ''),
+        'request_id': request.args.get('request_id', '').strip(),
+        'enrollment': request.args.get('enrollment', '').strip(),
+        'actual_out': '',
+        'actual_in': '',
+        'place': request.args.get('place', '').strip(),
     }
+
+    # If we have a request_id, use it to pull expected out/in from DB and
+    # prefill the OUT datetime from gatepass.out_date and IN as current time.
+    if prefill['request_id']:
+        try:
+            gp = GatepassRequest.query.get(int(prefill['request_id']))
+        except Exception:
+            gp = None
+
+        if gp:
+            prefill['enrollment'] = gp.enrollment_no
+            prefill['place'] = gp.place
+            # Expected OUT from request
+            if gp.out_date:
+                prefill['actual_out'] = gp.out_date.strftime('%Y-%m-%d %H:%M')
+            # Default IN to "now" so guard can just submit
+            prefill['actual_in'] = datetime.utcnow().strftime('%Y-%m-%d %H:%M')
 
     if request.method == 'POST':
         request_id = request.form.get('request_id', '').strip()
@@ -127,6 +179,12 @@ def gatepass_entry():
         actual_in = request.form.get('actual_in', '').strip()
         payment_mode = request.form.get('payment_mode', '').strip()
         verified_by = request.form.get('verified_by', '').strip()
+
+        # Duplicate-submission guard for OUT/IN entry
+        entry_payload = f"{request_id}|{enrollment}|{actual_out}|{actual_in}|{payment_mode}"
+        if session.get('last_gatepass_entry') == entry_payload:
+            flash('This OUT/IN entry was already saved.', 'info')
+            return redirect(url_for('security.dashboard'))
 
         errors = []
         if not enrollment:
@@ -182,6 +240,9 @@ def gatepass_entry():
         # Verified by is no longer a separate field, implicitly verified by guard_id
 
         db.session.commit()
+
+        # Remember last successfully saved entry payload
+        session['last_gatepass_entry'] = entry_payload
 
         flash(f'OUT/IN marked successfully! Late: {late_days} days | Fine: ₹{fine} | Status: {fine_status}', 'success')
         return redirect(url_for('security.dashboard'))
@@ -305,7 +366,7 @@ def send_notice():
             from utils.email import send_email
             security_name = session.get('security_name')
             
-            # Security notices usually go to everyone, or we can just blast it to all active students
+            # Security notices go to all students (no branch/year mapping for guards)
             target_students = Student.query.all()
             receivers = [s.email for s in target_students if s.email]
             
@@ -341,7 +402,24 @@ def view_notices():
         flash('Please login first.', 'error')
         return redirect(url_for('security.login'))
 
-    notices_list = Notice.query.order_by(Notice.notice_id.desc()).all()
+    notices_raw = Notice.query.order_by(Notice.notice_id.desc()).all()
+
+    notices_list = []
+    for n in notices_raw:
+        dt_str = n.sent_at.strftime('%Y-%m-%d %H:%M') if n.sent_at else ''
+
+        sender_label = 'Unknown'
+        if n.sender_type == 'Staff' and n.staff_sender:
+            sender_label = f"{n.staff_sender.full_name} ({n.staff_sender.role})"
+        elif n.sender_type == 'Security' and n.guard_sender:
+            sender_label = f"{n.guard_sender.full_name} (Security)"
+
+        notices_list.append({
+            'datetime_posted': dt_str,
+            'sender_role': sender_label,
+            'message': n.message,
+        })
+
     return render_template('security/notices.html', notices=notices_list)
 
 

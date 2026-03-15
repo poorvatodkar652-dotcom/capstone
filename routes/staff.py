@@ -144,7 +144,8 @@ def approve_request(req_id):
             <h3>Gatepass Request Approved</h3>
             <p>Hello {gatepass.student.full_name},</p>
             <p>Your gatepass request to <strong>{gatepass.place}</strong> has been <strong>approved</strong>.</p>
-            <p>You can now download your QR code from the portal.</p>
+            <p>Your authorization code is: <strong>{gatepass.auth_code}</strong></p>
+            <p>You can also view this code from the student portal.</p>
             """
             send_email(gatepass.student.email, subject, body)
     except Exception as e:
@@ -328,9 +329,22 @@ def send_notice():
             
             staff_role = session.get('staff_role')
             staff_name = session.get('staff_name')
+            staff_branch = session.get('staff_branch')
+            staff_year = session.get('staff_year')
             
-            # User requested all notices go to ALL students
-            target_students = Student.query.all()
+            # Send to corresponding department/year where applicable
+            if staff_role == 'Warden' and staff_branch and staff_year:
+                target_students = Student.query.filter_by(
+                    branch=staff_branch, year=staff_year
+                ).all()
+            elif staff_role == 'HOD' and staff_branch:
+                # HOD for a branch: all students in that branch
+                target_students = Student.query.filter_by(
+                    branch=staff_branch
+                ).all()
+            else:
+                # Fallback: all students
+                target_students = Student.query.all()
                 
             receivers = [s.email for s in target_students if s.email]
             if receivers:
@@ -365,7 +379,24 @@ def view_notices():
         flash('Please login first.', 'error')
         return redirect(url_for('staff.login'))
 
-    notices_list = Notice.query.order_by(Notice.notice_id.desc()).all()
+    notices_raw = Notice.query.order_by(Notice.notice_id.desc()).all()
+
+    notices_list = []
+    for n in notices_raw:
+        dt_str = n.sent_at.strftime('%Y-%m-%d %H:%M') if n.sent_at else ''
+
+        sender_label = 'Unknown'
+        if n.sender_type == 'Staff' and n.staff_sender:
+            sender_label = f"{n.staff_sender.full_name} ({n.staff_sender.role})"
+        elif n.sender_type == 'Security' and n.guard_sender:
+            sender_label = f"{n.guard_sender.full_name} (Security)"
+
+        notices_list.append({
+            'datetime_posted': dt_str,
+            'sender_role': sender_label,
+            'message': n.message,
+        })
+
     return render_template('staff/notices.html', notices=notices_list)
 
 

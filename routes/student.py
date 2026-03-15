@@ -1,10 +1,10 @@
-import io
 import os
 import re
+import random
+import string
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app, send_file
 from werkzeug.security import check_password_hash
-import qrcode
 
 from models import db, Student, GatepassRequest, Notice
 
@@ -80,6 +80,13 @@ def gatepass_request():
         in_date = request.form.get('in_date', '').strip()
         place = request.form.get('place', '').strip()
 
+        # Simple duplicate-submission guard: if the same payload was just submitted,
+        # do not create another request.
+        payload_key = f"{reason}|{out_date}|{in_date}|{place}"
+        if session.get('last_gatepass_request') == payload_key:
+            flash('This gatepass request was already submitted.', 'info')
+            return redirect(url_for('student.request_status'))
+
         errors = []
         if not reason:
             errors.append('Reason is required.')
@@ -90,8 +97,8 @@ def gatepass_request():
         if not place:
             errors.append('Place is required.')
 
-        # Validate date format
-        date_pattern = r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$'
+        # Validate date format (accept both 'YYYY-MM-DD HH:MM' and HTML datetime-local 'YYYY-MM-DDTHH:MM')
+        date_pattern = r'^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}$'
         if out_date and not re.match(date_pattern, out_date):
             errors.append('Out Date must be in YYYY-MM-DD HH:MM format.')
         if in_date and not re.match(date_pattern, in_date):
@@ -100,8 +107,8 @@ def gatepass_request():
         # Validate in_date > out_date
         if out_date and in_date and not errors:
             try:
-                out_dt = datetime.strptime(out_date, '%Y-%m-%d %H:%M')
-                in_dt = datetime.strptime(in_date, '%Y-%m-%d %H:%M')
+                out_dt = datetime.strptime(out_date.replace('T', ' '), '%Y-%m-%d %H:%M')
+                in_dt = datetime.strptime(in_date.replace('T', ' '), '%Y-%m-%d %H:%M')
                 if in_dt <= out_dt:
                     errors.append('In Date must be after Out Date.')
             except ValueError:
@@ -117,18 +124,24 @@ def gatepass_request():
         # We don't save branch, year, student_name in GatepassRequest anymore
         # We just link enrollment_no.
 
+        # Generate 6-char auth code
+        auth_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+
         new_request = GatepassRequest(
             enrollment_no=enrollment,
             reason=reason,
-            out_date=datetime.strptime(out_date, '%Y-%m-%d %H:%M'),
-            in_date=datetime.strptime(in_date, '%Y-%m-%d %H:%M'),
+            out_date=datetime.strptime(out_date.replace('T', ' '), '%Y-%m-%d %H:%M'),
+            in_date=datetime.strptime(in_date.replace('T', ' '), '%Y-%m-%d %H:%M'),
             place=place,
             status='Pending',
-            qr_file_path='',
+            auth_code=auth_code,
             request_datetime=datetime.utcnow()
         )
         db.session.add(new_request)
         db.session.commit()
+
+        # Remember last successfully created payload to prevent immediate duplicates
+        session['last_gatepass_request'] = payload_key
 
         # --- Email Notification to Warden ---
         try:
@@ -178,42 +191,6 @@ def request_status():
     return render_template('student/request_status.html', requests=requests_list)
 
 
-# ===================== DOWNLOAD QR =====================
-@student_bp.route('/download-qr/<int:req_id>')
-def download_qr(req_id):
-    if 'student_enrollment' not in session:
-        flash('Please login first.', 'error')
-        return redirect(url_for('student.login'))
-
-    gatepass = GatepassRequest.query.get(req_id)
-    if not gatepass or gatepass.enrollment_no != session['student_enrollment']:
-        flash('Request not found.', 'error')
-        return redirect(url_for('student.request_status'))
-
-    if gatepass.status != 'Approved':
-        flash('QR code only available for approved requests.', 'error')
-        return redirect(url_for('student.request_status'))
-
-    # Generate QR code in-memory (not saved to disk)
-    from urllib.parse import urlencode
-    qr_params = urlencode({
-        'request_id': gatepass.request_id,
-        'enrollment': gatepass.enrollment_no,
-        'out_date': gatepass.out_date.strftime('%Y-%m-%d %H:%M:%S'),
-        'in_date': gatepass.in_date.strftime('%Y-%m-%d %H:%M:%S'),
-        'place': gatepass.place
-    })
-    qr_url = f"{request.host_url.rstrip('/')}/security/gatepass-entry?{qr_params}"
-    qr_img = qrcode.make(qr_url)
-
-    # Save to in-memory buffer and send directly
-    buffer = io.BytesIO()
-    qr_img.save(buffer, format='PNG')
-    buffer.seek(0)
-
-    filename = f"QR_{gatepass.enrollment_no}_{gatepass.request_id}.png"
-    return send_file(buffer, mimetype='image/png', as_attachment=True, download_name=filename)
-
 
 # ===================== NOTICE BOARD =====================
 @student_bp.route('/notices')
@@ -222,7 +199,27 @@ def notices():
         flash('Please login first.', 'error')
         return redirect(url_for('student.login'))
 
-    notices_list = Notice.query.order_by(Notice.notice_id.desc()).all()
+    notices_raw = Notice.query.order_by(Notice.notice_id.desc()).all()
+
+    # Build view-friendly objects with time and sender name/role
+    notices_list = []
+    for n in notices_raw:
+        # Format timestamp
+        dt_str = n.sent_at.strftime('%Y-%m-%d %H:%M') if n.sent_at else ''
+
+        # Resolve sender display label
+        sender_label = 'Unknown'
+        if n.sender_type == 'Staff' and n.staff_sender:
+            sender_label = f"{n.staff_sender.full_name} ({n.staff_sender.role})"
+        elif n.sender_type == 'Security' and n.guard_sender:
+            sender_label = f"{n.guard_sender.full_name} (Security)"
+
+        notices_list.append({
+            'datetime_posted': dt_str,
+            'sender_role': sender_label,
+            'message': n.message,
+        })
+
     return render_template('student/notices.html', notices=notices_list)
 
 

@@ -47,8 +47,11 @@ def add_staff():
     from werkzeug.security import generate_password_hash
     import re
     
-    BRANCHES = ['Computer Engineering', 'Civil Engineering', 'Electrical Engineering', 'Mechanical Engineering', 'Electronics Engineering']
-    YEARS = ['1st Year', '2nd Year', '3rd Year']
+    # Use the same short codes as the rest of the app / lookup tables
+    # Branch codes: CO, IT, ENTC, EJ, DD, CE
+    BRANCHES = ['CO', 'IT', 'ENTC', 'EJ', 'DD', 'CE']
+    # Year codes: FY, SY, TY
+    YEARS = ['FY', 'SY', 'TY']
 
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
