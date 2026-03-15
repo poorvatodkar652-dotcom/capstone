@@ -208,6 +208,75 @@ def gatepass_register():
                            requests=requests_list, search=search)
 
 
+# ===================== EXPORT GATEPASS =====================
+@security_bp.route('/export-gatepass')
+def export_gatepass():
+    if 'security_mobile' not in session:
+        flash('Please login first.', 'error')
+        return redirect(url_for('security.login'))
+
+    status_filter = request.args.get('filter', 'All').strip()
+    enrollment_filter = request.args.get('enrollment', '').strip()
+    
+    query = db.session.query(GatepassEntry).join(GatepassRequest)
+    
+    if status_filter == 'Out':
+        # Students who are currently Out (have not returned)
+        query = query.filter(
+            GatepassEntry.actual_out_datetime != None,
+            GatepassEntry.actual_in_datetime == None
+        )
+    elif status_filter == 'In':
+        # Students who have returned today (or ever if we adjust logic, sticking to ever for report)
+        query = query.filter(
+            GatepassEntry.actual_in_datetime != None
+        )
+        
+    if enrollment_filter:
+        query = query.filter(GatepassRequest.enrollment_no.ilike(f'%{enrollment_filter}%'))
+        
+    entries = query.order_by(GatepassEntry.entry_id.desc()).all()
+    
+    import pandas as pd
+    from io import BytesIO
+    from flask import send_file
+    
+    data = []
+    for entry in entries:
+        req = entry.request
+        data.append({
+            'Entry ID': entry.entry_id,
+            'Request ID': req.request_id,
+            'Enrollment No': req.enrollment_no,
+            'Student Name': req.student.full_name,
+            'Place': req.place,
+            'Expected Out': req.out_date.strftime('%Y-%m-%d %H:%M') if req.out_date else '',
+            'Actual Out': entry.actual_out_datetime.strftime('%Y-%m-%d %H:%M') if entry.actual_out_datetime else '',
+            'Expected In': req.in_date.strftime('%Y-%m-%d %H:%M') if req.in_date else '',
+            'Actual In': entry.actual_in_datetime.strftime('%Y-%m-%d %H:%M') if entry.actual_in_datetime else 'Still Out',
+            'Late Days': entry.late_days,
+            'Fine Amount': entry.fine_amount,
+            'Fine Status': entry.fine_status,
+            'Payment Mode': entry.payment_mode or ''
+        })
+        
+    df = pd.DataFrame(data)
+    
+    output = BytesIO()
+    csv_data = df.to_csv(index=False).encode('utf-8')
+    output.write(csv_data)
+    output.seek(0)
+    
+    filename = f"gatepass_log_{status_filter.lower()}_{datetime.now().strftime('%Y%m%d%H%M')}.csv"
+    
+    return send_file(
+        output,
+        mimetype='text/csv',
+        as_attachment=True,
+        download_name=filename
+    )
+
+
 # ===================== SEND NOTICE =====================
 @security_bp.route('/send-notice', methods=['GET', 'POST'])
 def send_notice():

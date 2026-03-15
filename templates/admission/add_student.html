@@ -4,10 +4,21 @@
 {% block nav %}
 <div class="flex space-x-4">
     <a href="{{ url_for('home.admin_panel') }}"
-        class="text-white hover:text-yellow-300 font-medium transition-colors border border-transparent hover:border-yellow-300 px-3 py-1 rounded-md"><svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+        class="text-white hover:text-yellow-300 font-medium transition-colors border border-transparent hover:border-yellow-300 px-3 py-1 rounded-md"><svg
+            class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
+            </path>
+        </svg>
         Admin Panel</a>
     <a href="{{ url_for('home.admin_logout') }}"
-        class="bg-red-600 hover:bg-red-700 text-white font-medium transition-colors px-3 py-1 rounded-md shadow"><svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+        class="bg-red-600 hover:bg-red-700 text-white font-medium transition-colors px-3 py-1 rounded-md shadow"><svg
+            class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+        </svg>
         Logout</a>
 </div>
 {% endblock %}
@@ -16,7 +27,24 @@
 
 {% block content %}
 <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-8 max-w-3xl mx-auto mt-8">
-    <div class="text-2xl font-bold text-center text-blue-900 mb-6 pb-4 border-b"><svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg> Student Admission + Fees</div>
+    <div class="flex flex-col sm:flex-row justify-between items-center mb-6 pb-4 border-b gap-4">
+        <div class="text-2xl font-bold text-center text-blue-900"><svg class="w-5 h-5 inline-block mr-1" fill="none"
+                stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                </path>
+            </svg> Student Admission + Fees</div>
+
+        <a href="{{ url_for('admission.export_students') }}"
+            class="inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+            </svg>
+            Export All Students (CSV)
+        </a>
+    </div>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -27,7 +55,19 @@
             {% elif category == 'error' %}bg-red-50 border-red-500 text-red-800
             {% else %}bg-blue-50 border-blue-500 text-blue-800{% endif %}">
             <div class="flex items-center">
-                <span class="mr-2">{% if category == 'success' %}<svg class="w-5 h-5 inline-block mr-1 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>{% elif category == 'error' %}<svg class="w-5 h-5 inline-block mr-1 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>{% else %}<svg class="w-5 h-5 inline-block mr-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>{% endif
+                <span class="mr-2">{% if category == 'success' %}<svg class="w-5 h-5 inline-block mr-1 text-green-500"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>{% elif category == 'error' %}<svg class="w-5 h-5 inline-block mr-1 text-yellow-500"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                        </path>
+                    </svg>{% else %}<svg class="w-5 h-5 inline-block mr-1 text-blue-500" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>{% endif
                     %}</span>
                 <span class="text-sm font-medium">{{ message }}</span>
             </div>
@@ -39,104 +79,169 @@
     {% endif %}
     {% endwith %}
 
-    <form method="POST" class="space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
+    <!-- Single Student Form -->
+    <div class="mb-12">
+        <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Add Single Student</h3>
+        <form method="POST" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Enrollment Number <span
+                            class="text-red-500">*</span></label>
+                    <input type="text" name="enrollment"
+                        class="w-full border border-gray-300 rounded-md px-4 py-2.5 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                        placeholder="Unique enrollment number" required>
+                    <p class="text-xs text-gray-500 mt-1 italic">This will be the student's primary key (must be unique)
+                    </p>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Student Name <span
+                            class="text-red-500">*</span></label>
+                    <input type="text" name="name"
+                        class="w-full border border-gray-300 rounded-md px-4 py-2.5 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                        placeholder="Full name" required minlength="2">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Student Email <span
+                            class="text-red-500">*</span></label>
+                    <input type="email" name="email"
+                        class="w-full border border-gray-300 rounded-md px-4 py-2.5 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                        placeholder="student@example.com" required>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Hostel Name <span
+                            class="text-red-500">*</span></label>
+                    <input type="text" name="hostel"
+                        class="w-full border border-gray-300 rounded-md px-4 py-2.5 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                        placeholder="Hostel name" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Room Number <span
+                            class="text-red-500">*</span></label>
+                    <input type="text" name="room"
+                        class="w-full border border-gray-300 rounded-md px-4 py-2.5 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                        placeholder="Room number" required>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Branch <span
+                            class="text-red-500">*</span></label>
+                    <select name="branch"
+                        class="w-full border border-gray-300 rounded-md px-4 py-2.5 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition appearance-none"
+                        required>
+                        <option value="">Select Branch</option>
+                        {% for b in branches %}
+                        <option value="{{ b }}">{{ b }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Year <span
+                            class="text-red-500">*</span></label>
+                    <select name="year"
+                        class="w-full border border-gray-300 rounded-md px-4 py-2.5 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition appearance-none"
+                        required>
+                        <option value="">Select Year</option>
+                        {% for y in years %}
+                        <option value="{{ y }}">{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
             <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Enrollment Number <span
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Set Password <span
                         class="text-red-500">*</span></label>
-                <input type="text" name="enrollment"
+                <input type="password" name="password"
                     class="w-full border border-gray-300 rounded-md px-4 py-2.5 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                    placeholder="Unique enrollment number" required>
-                <p class="text-xs text-gray-500 mt-1 italic">This will be the student's primary key (must be unique)</p>
+                    placeholder="Minimum 4 characters" required minlength="4">
             </div>
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Student Name <span
-                        class="text-red-500">*</span></label>
-                <input type="text" name="name"
-                    class="w-full border border-gray-300 rounded-md px-4 py-2.5 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                    placeholder="Full name" required minlength="2">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Total Hostel Fees (₹) <span
+                            class="text-red-500">*</span></label>
+                    <input type="number" name="total_fees"
+                        class="w-full border border-gray-300 rounded-md px-4 py-2.5 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                        placeholder="e.g. 50000" required min="0" step="0.01">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Paid Fees (₹) <span
+                            class="text-red-500">*</span></label>
+                    <input type="number" name="paid_fees"
+                        class="w-full border border-gray-300 rounded-md px-4 py-2.5 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                        placeholder="e.g. 25000" required min="0" step="0.01">
+                </div>
             </div>
-            <div class="md:col-span-2">
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Student Email <span
-                        class="text-red-500">*</span></label>
-                <input type="email" name="email"
-                    class="w-full border border-gray-300 rounded-md px-4 py-2.5 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                    placeholder="student@example.com" required>
+            <div class="bg-blue-50 border border-blue-200 text-blue-800 p-4 rounded-md">
+                <span class="mr-2"><svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z">
+                        </path>
+                    </svg></span>
+                <span class="text-sm font-medium">Remaining fees and status (Paid/Partial/Due) will be calculated
+                    automatically.</span>
             </div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Hostel Name <span
-                        class="text-red-500">*</span></label>
-                <input type="text" name="hostel"
-                    class="w-full border border-gray-300 rounded-md px-4 py-2.5 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                    placeholder="Hostel name" required>
+            <button type="submit"
+                class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors mt-6">ADD
+                STUDENT</button>
+        </form>
+    </div>
+
+    <!-- Bulk Import Form -->
+    <div class="mt-8 pt-8 border-t border-gray-200">
+        <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Bulk Import Students (Excel)</h3>
+        <form action="{{ url_for('admission.import_students') }}" method="POST" enctype="multipart/form-data"
+            class="bg-gray-50 p-6 rounded-lg border border-dashed border-gray-300 text-center">
+
+            <div class="mb-4">
+                <span class="text-gray-600 block mb-2 text-sm">Upload an <strong>.xlsx</strong> file with the following
+                    columns:</span>
+                <code
+                    class="text-xs bg-gray-200 px-2 py-1 rounded text-gray-800 block mb-4 mx-auto w-max max-w-full overflow-x-auto">Enrollment No, Name, Email, Hostel, Room, Branch, Year, Total Fees, Paid Fees</code>
             </div>
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Room Number <span
-                        class="text-red-500">*</span></label>
-                <input type="text" name="room"
-                    class="w-full border border-gray-300 rounded-md px-4 py-2.5 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                    placeholder="Room number" required>
+
+            <div class="flex items-center justify-center w-full mb-4">
+                <label for="dropzone-file"
+                    class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-white hover:bg-gray-50">
+                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg class="w-8 h-8 mb-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                            fill="none" viewBox="0 0 20 16">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
+                        </svg>
+                        <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">Click to upload</span> or drag
+                            and drop</p>
+                        <p class="text-xs text-gray-500">.xlsx files only</p>
+                    </div>
+                    <input id="dropzone-file" type="file" name="excel_file" accept=".xlsx" class="hidden" required />
+                </label>
             </div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Branch <span
-                        class="text-red-500">*</span></label>
-                <select name="branch"
-                    class="w-full border border-gray-300 rounded-md px-4 py-2.5 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition appearance-none"
-                    required>
-                    <option value="">Select Branch</option>
-                    {% for b in branches %}
-                    <option value="{{ b }}">{{ b }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Year <span
-                        class="text-red-500">*</span></label>
-                <select name="year"
-                    class="w-full border border-gray-300 rounded-md px-4 py-2.5 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition appearance-none"
-                    required>
-                    <option value="">Select Year</option>
-                    {% for y in years %}
-                    <option value="{{ y }}">{{ y }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-        <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">Set Password <span
-                    class="text-red-500">*</span></label>
-            <input type="password" name="password"
-                class="w-full border border-gray-300 rounded-md px-4 py-2.5 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                placeholder="Minimum 4 characters" required minlength="4">
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Total Hostel Fees (₹) <span
-                        class="text-red-500">*</span></label>
-                <input type="number" name="total_fees"
-                    class="w-full border border-gray-300 rounded-md px-4 py-2.5 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                    placeholder="e.g. 50000" required min="0" step="0.01">
-            </div>
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Paid Fees (₹) <span
-                        class="text-red-500">*</span></label>
-                <input type="number" name="paid_fees"
-                    class="w-full border border-gray-300 rounded-md px-4 py-2.5 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                    placeholder="e.g. 25000" required min="0" step="0.01">
-            </div>
-        </div>
-        <div class="bg-blue-50 border border-blue-200 text-blue-800 p-4 rounded-md">
-            <span class="mr-2"><svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg></span>
-            <span class="text-sm font-medium">Remaining fees and status (Paid/Partial/Due) will be calculated
-                automatically.</span>
-        </div>
-        <button type="submit"
-            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors mt-6">ADD
-            STUDENT</button>
-    </form>
+
+            <div id="file-name-display" class="text-sm font-semibold text-blue-600 mb-4 hidden"></div>
+
+            <button type="submit"
+                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:w-auto sm:text-sm">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                </svg>
+                Import Excel File
+            </button>
+        </form>
+        <p class="text-xs text-gray-400 mt-4 italic text-center">Note: Passwords for bulk-imported students are set to
+            their Enrollment Number by default. Existing numbers will be skipped.</p>
+    </div>
 </div>
-{% endblock %}
+
+<script>
+    // Simple script to show selected file name
+    document.getElementById('dropzone-file').addEventListener('change', function (e) {
+        var fileName = e.target.files[0].name;
+        var display = document.getElementById('file-name-display');
+        display.textContent = "Selected: " + fileName;
+        display.classList.remove('hidden');
+    });
+</script>{% endblock %}

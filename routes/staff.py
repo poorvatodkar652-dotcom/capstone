@@ -42,6 +42,7 @@ def login():
 
         if staff and check_password_hash(staff.password_hash, password):
             session['staff_id'] = staff.staff_id
+            session['staff_mobile'] = staff.mobile_no # Set mobile_no to fix dashboard check
             session['staff_name'] = staff.full_name
             session['staff_role'] = staff.role
             session['staff_branch'] = staff.branch
@@ -57,7 +58,7 @@ def login():
 # ===================== DASHBOARD =====================
 @staff_bp.route('/dashboard')
 def dashboard():
-    if 'staff_mobile' not in session:
+    if 'staff_id' not in session: # Fix check from staff_mobile to staff_id
         flash('Please login first.', 'error')
         return redirect(url_for('staff.login'))
         
@@ -188,6 +189,74 @@ def reject_request(req_id):
 
     flash('Request rejected.', 'success')
     return redirect(url_for('staff.view_requests'))
+
+
+# ===================== EXPORT REQUESTS =====================
+@staff_bp.route('/export-requests')
+def export_requests():
+    if 'staff_id' not in session:
+        flash('Please login first.', 'error')
+        return redirect(url_for('staff.login'))
+
+    status_filter = request.args.get('status', 'All').strip()
+    enrollment_filter = request.args.get('enrollment', '').strip()
+    staff_role = session.get('staff_role')
+    
+    from models import Student
+    
+    query = db.session.query(GatepassRequest).join(Student)
+    
+    if staff_role == 'Warden':
+        branch = session['staff_branch']
+        year = session['staff_year']
+        query = query.filter(Student.branch == branch, Student.year == year)
+        
+    if status_filter != 'All':
+        query = query.filter(GatepassRequest.status == status_filter)
+        
+    if enrollment_filter:
+        query = query.filter(GatepassRequest.enrollment_no.ilike(f'%{enrollment_filter}%'))
+        
+    requests_list = query.order_by(GatepassRequest.request_id.desc()).all()
+    
+    import pandas as pd
+    from io import BytesIO
+    from flask import send_file
+    
+    data = []
+    for req in requests_list:
+        data.append({
+            'Request ID': req.request_id,
+            'Enrollment No': req.enrollment_no,
+            'Student Name': req.student.full_name,
+            'Student Branch': req.student.branch,
+            'Student Year': req.student.year,
+            'Place': req.place,
+            'Reason': req.reason,
+            'Out Date': req.out_date.strftime('%Y-%m-%d %H:%M') if req.out_date else '',
+            'In Date': req.in_date.strftime('%Y-%m-%d %H:%M') if req.in_date else '',
+            'Status': req.status,
+            'Reject Reason': req.reject_reason or ''
+        })
+        
+    df = pd.DataFrame(data)
+    
+    # Write to a BytesIO buffer
+    output = BytesIO()
+    # Using open() inside BytesIO won't work perfectly for pandas to_csv if it expects a string buffer,
+    # but pandas to_csv supports BytesIO in binary mode for certain encodings or we can encode it.
+    csv_data = df.to_csv(index=False).encode('utf-8')
+    output.write(csv_data)
+    output.seek(0)
+    
+    filename = f"gatepass_requests_{status_filter.lower()}_{datetime.now().strftime('%Y%m%d%H%M')}.csv"
+    
+    return send_file(
+        output,
+        mimetype='text/csv',
+        as_attachment=True,
+        download_name=filename
+    )
 
 
 # ===================== GATEPASS REGISTER (Warden) =====================

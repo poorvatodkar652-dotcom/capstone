@@ -6,3 +6,5 @@ qrcode[pil]
 pillow
 asgiref
 uvicorn
+pandas==2.2.1
+openpyxl==3.1.2
