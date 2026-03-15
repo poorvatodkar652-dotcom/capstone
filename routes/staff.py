@@ -40,102 +40,18 @@ def login():
             flash('Something went wrong. Please try again.', 'error')
             return render_template('staff/login_register.html', mode='login')
 
-        if not staff or not check_password_hash(staff.password_hash, password):
+        if staff and check_password_hash(staff.password_hash, password):
+            session['staff_id'] = staff.staff_id
+            session['staff_name'] = staff.full_name
+            session['staff_role'] = staff.role
+            session['staff_branch'] = staff.branch
+            session['staff_year'] = staff.year
+            flash(f'Welcome, {staff.full_name}!', 'success')
+            return redirect(url_for('staff.dashboard'))
+        else:
             flash('Invalid mobile number or password.', 'error')
-            return render_template('staff/login_register.html', mode='login')
-
-        session.permanent = True
-        session['staff_id'] = staff.staff_id
-        session['staff_mobile'] = staff.mobile_no
-        session['staff_name'] = staff.full_name
-        session['staff_role'] = staff.role
-        session['staff_branch'] = staff.branch
-        session['staff_year'] = staff.year
-        flash(f'Welcome, {staff.full_name} ({staff.role})!', 'success')
-        return redirect(url_for('staff.dashboard'))
 
     return render_template('staff/login_register.html', mode='login')
-
-
-# ===================== REGISTER =====================
-@staff_bp.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        name = request.form.get('name', '').strip()
-        email = request.form.get('email', '').strip()
-        mobile = request.form.get('mobile', '').strip()
-        dob = request.form.get('dob', '').strip()
-        password = request.form.get('password', '').strip()
-        confirm_password = request.form.get('confirm_password', '').strip()
-        role = request.form.get('role', '').strip()
-        branch = request.form.get('branch', '').strip()
-        year = request.form.get('year', '').strip()
-
-        errors = []
-        if not name:
-            errors.append('Name is required.')
-        elif len(name) < 2:
-            errors.append('Name must be at least 2 characters.')
-        if not email:
-            errors.append('Email is required.')
-        elif not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
-            errors.append('Invalid email format.')
-        if not mobile:
-            errors.append('Mobile number is required.')
-        elif not re.match(r'^\d{10}$', mobile):
-            errors.append('Mobile number must be exactly 10 digits.')
-        if not dob:
-            errors.append('Date of Birth is required.')
-        elif not re.match(r'^\d{4}-\d{2}-\d{2}$', dob):
-            errors.append('DOB must be in YYYY-MM-DD format.')
-        if not password:
-            errors.append('Password is required.')
-        elif len(password) < 4:
-            errors.append('Password must be at least 4 characters.')
-        if password != confirm_password:
-            errors.append('Passwords do not match.')
-        if not role:
-            errors.append('Role is required.')
-        if not branch:
-            errors.append('Branch is required.')
-        if not year:
-            errors.append('Year is required.')
-
-        if errors:
-            for e in errors:
-                flash(e, 'error')
-            return render_template('staff/login_register.html',
-                                   branches=BRANCHES, years=YEARS, mode='register')
-
-        try:
-            existing = Staff.query.filter_by(mobile_no=mobile).first()
-            if existing:
-                flash('This mobile number is already registered. Please use a different number or login.', 'error')
-                return render_template('staff/login_register.html',
-                                       branches=BRANCHES, years=YEARS, mode='register')
-
-            new_staff = Staff(
-                full_name=name,
-                email=email,
-                mobile_no=mobile,
-                password_hash=generate_password_hash(password),
-                role=role,
-                branch=branch,
-                year=year if role != 'HOD' else None
-            )
-            db.session.add(new_staff)
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
-            flash('Something went wrong during registration. Please try again.', 'error')
-            return render_template('staff/login_register.html',
-                                   branches=BRANCHES, years=YEARS, mode='register')
-
-        flash('Staff registered successfully! You can now login.', 'success')
-        return redirect(url_for('staff.login'))
-
-    return render_template('staff/login_register.html',
-                           branches=BRANCHES, years=YEARS, mode='register')
 
 
 # ===================== DASHBOARD =====================
