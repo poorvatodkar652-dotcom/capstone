@@ -44,18 +44,16 @@
         </div>
         <div class="form-row">
             <div class="form-group">
-                <label>Actual OUT DateTime <span class="required">*</span></label>
-                <input type="text" name="actual_out" class="form-control" placeholder="YYYY-MM-DD HH:MM" required
-                    pattern="\d{4}-\d{2}-\d{2} \d{2}:\d{2}" title="Format: YYYY-MM-DD HH:MM"
-                    value="{{ prefill.actual_out if prefill else '' }}">
-                <div class="form-hint">Format: YYYY-MM-DD HH:MM</div>
+                <label>Actual OUT Date &amp; Time <span class="required">*</span></label>
+                <input type="datetime-local" name="actual_out" class="form-control" required
+                    value="{{ (prefill.actual_out|replace(' ', 'T')) if prefill and prefill.actual_out else '' }}">
+                <div class="form-hint">Use the calendar &amp; time picker (pre-filled from request).</div>
             </div>
             <div class="form-group">
-                <label>Actual IN DateTime <span class="required">*</span></label>
-                <input type="text" name="actual_in" class="form-control" placeholder="YYYY-MM-DD HH:MM" required
-                    pattern="\d{4}-\d{2}-\d{2} \d{2}:\d{2}" title="Format: YYYY-MM-DD HH:MM"
-                    value="{{ prefill.actual_in if prefill else '' }}">
-                <div class="form-hint">Format: YYYY-MM-DD HH:MM</div>
+                <label>Actual IN Date &amp; Time <span class="required">*</span></label>
+                <input type="datetime-local" name="actual_in" class="form-control" required
+                    value="{{ (prefill.actual_in|replace(' ', 'T')) if prefill and prefill.actual_in else '' }}">
+                <div class="form-hint">Use the calendar &amp; time picker (default is current time).</div>
             </div>
         </div>
 
@@ -77,8 +75,10 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>Verified By</label>
-                <input type="text" name="verified_by" class="form-control" placeholder="Verifier name (optional)">
+                <label>Fine Amount (optional)</label>
+                <input type="number" name="fine_amount" class="form-control" step="0.01"
+                    placeholder="Override calculated fine (₹)">
+                <div class="form-hint">Leave blank to use automatic fine based on late days.</div>
             </div>
         </div>
         <button type="submit" class="btn btn-primary btn-full btn-lg">Submit OUT/IN Entry</button>

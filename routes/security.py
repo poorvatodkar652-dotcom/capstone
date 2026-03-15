@@ -179,6 +179,7 @@ def gatepass_entry():
         actual_in = request.form.get('actual_in', '').strip()
         payment_mode = request.form.get('payment_mode', '').strip()
         verified_by = request.form.get('verified_by', '').strip()
+        fine_amount_input = request.form.get('fine_amount', '').strip()
 
         # Duplicate-submission guard for OUT/IN entry
         entry_payload = f"{request_id}|{enrollment}|{actual_out}|{actual_in}|{payment_mode}"
@@ -190,7 +191,8 @@ def gatepass_entry():
         if not enrollment:
             errors.append('Enrollment number is required.')
 
-        date_pattern = r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$'
+        # Accept both "YYYY-MM-DD HH:MM" and HTML datetime-local "YYYY-MM-DDTHH:MM"
+        date_pattern = r'^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}$'
         if not actual_out:
             errors.append('Actual OUT DateTime is required.')
         elif not re.match(date_pattern, actual_out):
@@ -217,10 +219,26 @@ def gatepass_entry():
             flash('No approved gatepass request found for this input.', 'error')
             return render_template('security/gatepass_entry.html', prefill=prefill)
 
-        actual_out_dt = datetime.strptime(actual_out, '%Y-%m-%d %H:%M')
-        actual_in_dt = datetime.strptime(actual_in, '%Y-%m-%d %H:%M')
+        # Normalise possible 'T' from datetime-local to space
+        actual_out_dt = datetime.strptime(actual_out.replace('T', ' '), '%Y-%m-%d %H:%M')
+        actual_in_dt = datetime.strptime(actual_in.replace('T', ' '), '%Y-%m-%d %H:%M')
 
         late_days, fine, fine_status = calculate_late_and_fine(gatepass.in_date, actual_in_dt)
+
+        # If guard provided a manual fine amount, override the calculated fine
+        if fine_amount_input:
+            try:
+                manual_fine = float(fine_amount_input)
+                if manual_fine < 0:
+                    raise ValueError
+                fine = manual_fine
+                # Adjust fine_status to match manual fine if needed
+                if fine == 0:
+                    fine_status = 'No Fine'
+                elif fine_status == 'No Fine':
+                    fine_status = 'Unpaid'
+            except ValueError:
+                flash('Invalid fine amount. Using automatically calculated fine instead.', 'error')
 
         # Create or update GatepassEntry
         entry = gatepass.entry
@@ -258,12 +276,15 @@ def gatepass_register():
         return redirect(url_for('security.login'))
 
     search = request.args.get('search', '').strip()
+
+    # Security should only see Approved requests (those they can verify)
+    base_query = GatepassRequest.query.filter_by(status='Approved')
     if search:
-        requests_list = GatepassRequest.query.filter(
+        base_query = base_query.filter(
             GatepassRequest.enrollment_no.ilike(f'%{search}%')
-        ).order_by(GatepassRequest.request_id.desc()).all()
-    else:
-        requests_list = GatepassRequest.query.order_by(GatepassRequest.request_id.desc()).all()
+        )
+
+    requests_list = base_query.order_by(GatepassRequest.request_id.desc()).all()
 
     return render_template('security/gatepass_register.html',
                            requests=requests_list, search=search)
