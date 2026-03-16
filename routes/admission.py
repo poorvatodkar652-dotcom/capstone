@@ -9,6 +9,13 @@ admission_bp = Blueprint('admission', __name__)
 BRANCHES = ["CO", "IT", "ENTC", "EJ", "DD", "CE"]
 YEARS = ["FY", "SY", "TY"]
 
+@admission_bp.before_request
+def block_student_access():
+    # Prevent logged-in students from accessing admission module routes
+    if session.get('student_enrollment') and not session.get('admin'):
+        flash('Access denied.', 'error')
+        return redirect(url_for('student.dashboard'))
+
 
 @admission_bp.route('/add-student', methods=['GET', 'POST'])
 def add_student():
@@ -116,9 +123,11 @@ def add_student():
             )
             db.session.add(new_student)
             db.session.commit()
-        except Exception:
+        except Exception as e:
             db.session.rollback()
-            flash('Something went wrong. Please try again.', 'error')
+            # Surface the real error to help debugging (also prints to server log)
+            print(f"Error adding student: {e}")
+            flash('Failed to add student. Please check inputs / database and try again.', 'error')
             return render_template('admission/add_student.html',
                                    branches=BRANCHES, years=YEARS)
 
@@ -136,7 +145,8 @@ def export_students():
         flash('Admin access required.', 'error')
         return redirect(url_for('home.admin_login'))
 
-    students = Student.query.order_by(Student.student_id.desc()).all()
+    # Student primary key is enrollment_no; created_at is the best "latest first" sort.
+    students = Student.query.order_by(Student.created_at.desc()).all()
     
     import pandas as pd
     from io import BytesIO
@@ -146,7 +156,6 @@ def export_students():
     data = []
     for s in students:
         data.append({
-            'Student ID': s.student_id,
             'Enrollment No': s.enrollment_no,
             'Name': s.full_name,
             'Email': s.email,

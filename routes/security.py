@@ -9,6 +9,13 @@ security_bp = Blueprint('security', __name__)
 
 FINE_PER_DAY = 50
 
+@security_bp.before_request
+def block_student_access():
+    # Prevent logged-in students from accessing security module routes
+    if session.get('student_enrollment') and not session.get('guard_id'):
+        flash('Access denied.', 'error')
+        return redirect(url_for('student.dashboard'))
+
 
 def calculate_late_and_fine(expected_in_dt, actual_in_dt):
     """Calculate late days and fine based on expected vs actual in datetime."""
@@ -153,6 +160,8 @@ def gatepass_entry():
         'actual_out': '',
         'actual_in': '',
         'place': request.args.get('place', '').strip(),
+        'expected_in': '',
+        'entry_state': 'none',  # none | out (out recorded, waiting for in) | done
     }
 
     # If we have a request_id, use it to pull expected out/in from DB and
@@ -169,38 +178,50 @@ def gatepass_entry():
             # Expected OUT from request
             if gp.out_date:
                 prefill['actual_out'] = gp.out_date.strftime('%Y-%m-%d %H:%M')
+            if gp.in_date:
+                prefill['expected_in'] = gp.in_date.strftime('%Y-%m-%d %H:%M')
             # Default IN to "now" so guard can just submit
             prefill['actual_in'] = datetime.utcnow().strftime('%Y-%m-%d %H:%M')
+            if gp.entry:
+                if gp.entry.actual_out_datetime and not gp.entry.actual_in_datetime:
+                    prefill['entry_state'] = 'out'
+                elif gp.entry.actual_out_datetime and gp.entry.actual_in_datetime:
+                    prefill['entry_state'] = 'done'
 
     if request.method == 'POST':
+        action = request.form.get('action', '').strip().lower()  # out | in
         request_id = request.form.get('request_id', '').strip()
         enrollment = request.form.get('enrollment', '').strip()
         actual_out = request.form.get('actual_out', '').strip()
         actual_in = request.form.get('actual_in', '').strip()
         payment_mode = request.form.get('payment_mode', '').strip()
-        verified_by = request.form.get('verified_by', '').strip()
         fine_amount_input = request.form.get('fine_amount', '').strip()
+        fine_status_input = request.form.get('fine_status', '').strip()  # Paid/Unpaid/''(auto)
 
-        # Duplicate-submission guard for OUT/IN entry
-        entry_payload = f"{request_id}|{enrollment}|{actual_out}|{actual_in}|{payment_mode}"
+        # Duplicate-submission guard for entry action
+        entry_payload = f"{action}|{request_id}|{enrollment}|{actual_out}|{actual_in}|{payment_mode}|{fine_status_input}|{fine_amount_input}"
         if session.get('last_gatepass_entry') == entry_payload:
-            flash('This OUT/IN entry was already saved.', 'info')
+            flash('This entry was already saved.', 'info')
             return redirect(url_for('security.dashboard'))
 
         errors = []
         if not enrollment:
             errors.append('Enrollment number is required.')
+        if action not in ('out', 'in'):
+            errors.append('Invalid action. Please try again.')
 
         # Accept both "YYYY-MM-DD HH:MM" and HTML datetime-local "YYYY-MM-DDTHH:MM"
         date_pattern = r'^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}$'
-        if not actual_out:
-            errors.append('Actual OUT DateTime is required.')
-        elif not re.match(date_pattern, actual_out):
-            errors.append('OUT DateTime must be in YYYY-MM-DD HH:MM format.')
-        if not actual_in:
-            errors.append('Actual IN DateTime is required.')
-        elif not re.match(date_pattern, actual_in):
-            errors.append('IN DateTime must be in YYYY-MM-DD HH:MM format.')
+        if action == 'out':
+            if not actual_out:
+                errors.append('Actual OUT DateTime is required.')
+            elif not re.match(date_pattern, actual_out):
+                errors.append('OUT DateTime must be in YYYY-MM-DD HH:MM format.')
+        elif action == 'in':
+            if not actual_in:
+                errors.append('Actual IN DateTime is required.')
+            elif not re.match(date_pattern, actual_in):
+                errors.append('IN DateTime must be in YYYY-MM-DD HH:MM format.')
 
         if errors:
             for e in errors:
@@ -219,8 +240,39 @@ def gatepass_entry():
             flash('No approved gatepass request found for this input.', 'error')
             return render_template('security/gatepass_entry.html', prefill=prefill)
 
-        # Normalise possible 'T' from datetime-local to space
-        actual_out_dt = datetime.strptime(actual_out.replace('T', ' '), '%Y-%m-%d %H:%M')
+        # Create or update GatepassEntry
+        entry = gatepass.entry
+        if not entry:
+            entry = GatepassEntry(
+                request_id=gatepass.request_id,
+                guard_id=session['guard_id'],
+            )
+            db.session.add(entry)
+
+        # Apply the correct action
+        if action == 'out':
+            if entry.actual_out_datetime:
+                flash('OUT time is already recorded for this request.', 'info')
+                return redirect(url_for('security.dashboard'))
+
+            actual_out_dt = datetime.strptime(actual_out.replace('T', ' '), '%Y-%m-%d %H:%M')
+            entry.actual_out_datetime = actual_out_dt
+            entry.guard_id = session['guard_id']
+            db.session.commit()
+
+            session['last_gatepass_entry'] = entry_payload
+            flash('OUT marked successfully.', 'success')
+            return redirect(url_for('security.dashboard'))
+
+        # action == 'in'
+        if not entry.actual_out_datetime:
+            flash('Cannot mark IN before OUT is recorded for this request.', 'error')
+            return render_template('security/gatepass_entry.html', prefill=prefill)
+
+        if entry.actual_in_datetime:
+            flash('IN time is already recorded for this request.', 'info')
+            return redirect(url_for('security.dashboard'))
+
         actual_in_dt = datetime.strptime(actual_in.replace('T', ' '), '%Y-%m-%d %H:%M')
 
         late_days, fine, fine_status = calculate_late_and_fine(gatepass.in_date, actual_in_dt)
@@ -232,37 +284,26 @@ def gatepass_entry():
                 if manual_fine < 0:
                     raise ValueError
                 fine = manual_fine
-                # Adjust fine_status to match manual fine if needed
-                if fine == 0:
-                    fine_status = 'No Fine'
-                elif fine_status == 'No Fine':
-                    fine_status = 'Unpaid'
             except ValueError:
                 flash('Invalid fine amount. Using automatically calculated fine instead.', 'error')
 
-        # Create or update GatepassEntry
-        entry = gatepass.entry
-        if not entry:
-            entry = GatepassEntry(
-                request_id=gatepass.request_id,
-                guard_id=session['guard_id'],
-            )
-            db.session.add(entry)
-            
-        entry.actual_out_datetime = actual_out_dt
+        # Allow manual fine status override (Paid/Unpaid) for late cases
+        if fine_status_input in ('Paid', 'Unpaid'):
+            fine_status = fine_status_input
+
         entry.actual_in_datetime = actual_in_dt
         entry.late_days = late_days
         entry.fine_amount = fine
         entry.fine_status = fine_status
         entry.payment_mode = payment_mode
-        # Verified by is no longer a separate field, implicitly verified by guard_id
+        entry.guard_id = session['guard_id']
 
         db.session.commit()
 
         # Remember last successfully saved entry payload
         session['last_gatepass_entry'] = entry_payload
 
-        flash(f'OUT/IN marked successfully! Late: {late_days} days | Fine: ₹{fine} | Status: {fine_status}', 'success')
+        flash(f'IN marked successfully! Late: {late_days} days | Fine: ₹{fine} | Status: {fine_status}', 'success')
         return redirect(url_for('security.dashboard'))
 
     return render_template('security/gatepass_entry.html', prefill=prefill)

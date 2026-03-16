@@ -42,6 +42,9 @@ def add_staff():
     if not session.get('admin'):
         flash('Please login as admin first.', 'error')
         return redirect(url_for('home.index'))
+    if session.get('student_enrollment'):
+        flash('Access denied.', 'error')
+        return redirect(url_for('student.dashboard'))
         
     from models import Staff, db
     from werkzeug.security import generate_password_hash
@@ -118,6 +121,9 @@ def add_security():
     if not session.get('admin'):
         flash('Please login as admin first.', 'error')
         return redirect(url_for('home.index'))
+    if session.get('student_enrollment'):
+        flash('Access denied.', 'error')
+        return redirect(url_for('student.dashboard'))
         
     from models import SecurityGuard, db
     from werkzeug.security import generate_password_hash

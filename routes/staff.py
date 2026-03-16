@@ -10,6 +10,13 @@ staff_bp = Blueprint('staff', __name__)
 BRANCHES = ["CO", "IT", "ENTC", "EJ", "DD", "CE"]
 YEARS = ["FY", "SY", "TY"]
 
+@staff_bp.before_request
+def block_student_access():
+    # Prevent logged-in students from accessing staff module routes
+    if session.get('student_enrollment') and not session.get('staff_id'):
+        flash('Access denied.', 'error')
+        return redirect(url_for('student.dashboard'))
+
 
 # ===================== LOGIN =====================
 @staff_bp.route('/login', methods=['GET', 'POST'])
