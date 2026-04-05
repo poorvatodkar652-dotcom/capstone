@@ -186,9 +186,9 @@ def export_students():
         download_name=filename
     )
 
-# ===================== IMPORT STUDENTS =====================
-@admission_bp.route('/import-students', methods=['POST'])
-def import_students():
+# ===================== PREVIEW IMPORT (Phase 1) =====================
+@admission_bp.route('/preview-import', methods=['POST'])
+def preview_import():
     if not session.get('admin'):
         flash('Admin access required.', 'error')
         return redirect(url_for('home.admin_login'))
@@ -198,96 +198,153 @@ def import_students():
         return redirect(url_for('admission.add_student'))
 
     file = request.files['excel_file']
-    
+
     if file.filename == '':
         flash('No selected file', 'error')
         return redirect(url_for('admission.add_student'))
 
-    if file and file.filename.endswith('.xlsx'):
-        try:
-            import pandas as pd
-            
-            # Read the excel file
-            df = pd.read_excel(file)
-            
-            # Expected columns
-            required_cols = ['Enrollment No', 'Name', 'Email', 'Hostel', 'Room', 'Branch', 'Year', 'Total Fees', 'Paid Fees']
-            
-            actual_cols = df.columns.tolist()
-            col_map = {}
-            for req in required_cols:
-                for act in actual_cols:
-                    if str(act).strip().lower() == req.lower():
-                        col_map[req] = act
-                        break
-                if req not in col_map:
-                    flash(f'Missing required column: {req}', 'error')
-                    return redirect(url_for('admission.add_student'))
-
-            success_count = 0
-            duplicate_count = 0
-            error_count = 0
-            
-            for index, row in df.iterrows():
-                try:
-                    enrollment = str(row[col_map['Enrollment No']]).strip()
-                    if not enrollment or enrollment == 'nan':
-                        continue
-                        
-                    name = str(row[col_map['Name']]).strip()
-                    email = str(row[col_map['Email']]).strip()
-                    hostel = str(row[col_map['Hostel']]).strip()
-                    room = str(row[col_map['Room']]).strip()
-                    branch = str(row[col_map['Branch']]).strip()
-                    year = str(row[col_map['Year']]).strip()
-                    
-                    total_fees = float(row[col_map['Total Fees']]) if not pd.isna(row[col_map['Total Fees']]) else 0.0
-                    paid_fees = float(row[col_map['Paid Fees']]) if not pd.isna(row[col_map['Paid Fees']]) else 0.0
-                    
-                    if not all([enrollment, name, email, hostel, room, branch, year]):
-                        error_count += 1
-                        continue
-                        
-                    existing = Student.query.filter_by(enrollment_no=enrollment).first()
-                    if existing:
-                        duplicate_count += 1
-                        continue
-                        
-                    remaining = max(0.0, total_fees - paid_fees)
-                    if remaining == 0:
-                        status = 'Paid'
-                    elif paid_fees > 0:
-                        status = 'Partial'
-                    else:
-                        status = 'Due'
-                        
-                    new_student = Student(
-                        enrollment_no=enrollment,
-                        full_name=name,
-                        email=email,
-                        hostel_name=hostel,
-                        room_number=room,
-                        branch=branch,
-                        year=year,
-                        password_hash=generate_password_hash(enrollment),
-                        total_fees=total_fees,
-                        paid_fees=paid_fees,
-                        remaining_fees=remaining,
-                        fee_status=status
-                    )
-                    db.session.add(new_student)
-                    success_count += 1
-                    
-                except Exception as e:
-                    print(f"Error parsing row {index}: {e}")
-                    error_count += 1
-                    
-            db.session.commit()
-            flash(f'Import Complete: {success_count} added, {duplicate_count} duplicates skipped, {error_count} errors.', 'success')
-            
-        except Exception as e:
-            flash(f'Failed to process file: {str(e)}', 'error')
-    else:
+    if not file.filename.endswith('.xlsx'):
         flash('Invalid file format. Please upload an .xlsx file.', 'error')
-        
+        return redirect(url_for('admission.add_student'))
+
+    try:
+        import pandas as pd
+
+        df = pd.read_excel(file)
+
+        required_cols = ['Enrollment No', 'Name', 'Email', 'Hostel', 'Room', 'Branch', 'Year', 'Total Fees', 'Paid Fees']
+
+        actual_cols = df.columns.tolist()
+        col_map = {}
+        for req in required_cols:
+            for act in actual_cols:
+                if str(act).strip().lower() == req.lower():
+                    col_map[req] = act
+                    break
+            if req not in col_map:
+                flash(f'Missing required column: {req}', 'error')
+                return redirect(url_for('admission.add_student'))
+
+        rows = []          # list of dicts to show in preview table
+        error_count = 0
+
+        for index, row in df.iterrows():
+            try:
+                enrollment = str(row[col_map['Enrollment No']]).strip()
+                if not enrollment or enrollment == 'nan':
+                    continue
+
+                name       = str(row[col_map['Name']]).strip()
+                email      = str(row[col_map['Email']]).strip()
+                hostel     = str(row[col_map['Hostel']]).strip()
+                room       = str(row[col_map['Room']]).strip()
+                branch     = str(row[col_map['Branch']]).strip()
+                year       = str(row[col_map['Year']]).strip()
+                total_fees = float(row[col_map['Total Fees']]) if not pd.isna(row[col_map['Total Fees']]) else 0.0
+                paid_fees  = float(row[col_map['Paid Fees']])  if not pd.isna(row[col_map['Paid Fees']])  else 0.0
+
+                if not all([enrollment, name, email, hostel, room, branch, year]):
+                    error_count += 1
+                    continue
+
+                # Check if students already exists in DB
+                exists = Student.query.filter_by(enrollment_no=enrollment).first() is not None
+
+                rows.append({
+                    'enrollment': enrollment,
+                    'name':       name,
+                    'email':      email,
+                    'hostel':     hostel,
+                    'room':       room,
+                    'branch':     branch,
+                    'year':       year,
+                    'total_fees': total_fees,
+                    'paid_fees':  paid_fees,
+                    'exists':     exists,
+                })
+            except Exception as e:
+                print(f"Error parsing row {index}: {e}")
+                error_count += 1
+
+        # Store parsed rows in session so confirm-import can use them
+        session['bulk_import_rows'] = rows
+
+        new_count       = sum(1 for r in rows if not r['exists'])
+        duplicate_count = sum(1 for r in rows if r['exists'])
+
+        return render_template(
+            'admission/bulk_preview.html',
+            rows=rows,
+            new_count=new_count,
+            duplicate_count=duplicate_count,
+            error_count=error_count,
+        )
+
+    except Exception as e:
+        flash(f'Failed to process file: {str(e)}', 'error')
+        return redirect(url_for('admission.add_student'))
+
+
+# ===================== CONFIRM IMPORT (Phase 2) =====================
+@admission_bp.route('/confirm-import', methods=['POST'])
+def confirm_import():
+    if not session.get('admin'):
+        flash('Admin access required.', 'error')
+        return redirect(url_for('home.admin_login'))
+
+    rows = session.pop('bulk_import_rows', None)
+    if not rows:
+        flash('No import data found. Please upload the file again.', 'error')
+        return redirect(url_for('admission.add_student'))
+
+    # Read excluded enrollments sent from the preview page
+    excluded_str = request.form.get('excluded', '')
+    excluded_set = set(e.strip() for e in excluded_str.split(',') if e.strip())
+
+    success_count = 0
+    duplicate_count = 0
+
+    for r in rows:
+        if r['exists'] or r['enrollment'] in excluded_set:
+            duplicate_count += 1
+            continue
+
+        # Double-check in DB to avoid race conditions
+        if Student.query.filter_by(enrollment_no=r['enrollment']).first():
+            duplicate_count += 1
+            continue
+
+        remaining = max(0.0, r['total_fees'] - r['paid_fees'])
+        if remaining == 0:
+            status = 'Paid'
+        elif r['paid_fees'] > 0:
+            status = 'Partial'
+        else:
+            status = 'Due'
+
+        new_student = Student(
+            enrollment_no=r['enrollment'],
+            full_name=r['name'],
+            email=r['email'],
+            hostel_name=r['hostel'],
+            room_number=r['room'],
+            branch=r['branch'],
+            year=r['year'],
+            password_hash=generate_password_hash(r['enrollment']),
+            total_fees=r['total_fees'],
+            paid_fees=r['paid_fees'],
+            remaining_fees=remaining,
+            fee_status=status,
+        )
+        db.session.add(new_student)
+        success_count += 1
+
+    try:
+        db.session.commit()
+        flash(f'✅ Import Complete: {success_count} added, {duplicate_count} duplicates skipped.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error during bulk import commit: {e}")
+        flash('Failed to import students. Please try again.', 'error')
+
     return redirect(url_for('admission.add_student'))
